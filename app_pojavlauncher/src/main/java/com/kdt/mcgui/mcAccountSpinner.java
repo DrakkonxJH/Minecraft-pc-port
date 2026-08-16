@@ -124,14 +124,6 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
         invalidate();
     };
 
-    /* Triggered when we need to do microsoft login */
-    private final ExtraListener<Uri> mMicrosoftLoginListener = (key, value) -> {
-        mLoginBarPaint.setColor(getResources().getColor(R.color.minebutton_color));
-        new MicrosoftBackgroundLogin(false, value.getQueryParameter("code")).performLogin(
-                mProgressListener, mDoneListener, mErrorListener, mOfflineNameListener);
-        return false;
-    };
-
     /*
      * Login Microsoft bem-sucedido, mas a conta nao tem licenca do Java Edition.
      * Em vez de criar uma conta "Demo.Player" (que ativa a flag --demo e limita o
@@ -139,6 +131,14 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
      */
     private final MicrosoftBackgroundLogin.OfflineNameListener mOfflineNameListener =
             refreshToken -> askForOfflineNickname();
+
+    /* Triggered when we need to do microsoft login */
+    private final ExtraListener<Uri> mMicrosoftLoginListener = (key, value) -> {
+        mLoginBarPaint.setColor(getResources().getColor(R.color.minebutton_color));
+        new MicrosoftBackgroundLogin(false, value.getQueryParameter("code")).performLogin(
+                mProgressListener, mDoneListener, mErrorListener, mOfflineNameListener);
+        return false;
+    };
 
     private void askForOfflineNickname() {
         Context context = getContext();
