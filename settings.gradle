@@ -10,8 +10,11 @@ pluginManagement {
 // "Cannot find a Java installation ... matching: {languageVersion=8}" em qualquer
 // maquina que nao tenha um JDK 8 instalado (Foojay e o provedor oficial usado
 // pela documentacao do Gradle).
+// ATENCAO: a versao 1.0.0 ou superior e OBRIGATORIA no Gradle 9. Versoes 0.x
+// referenciam JvmVendorSpec.IBM_SEMERU, constante removida no Gradle 9.0, e
+// falham com "does not have member field ... IBM_SEMERU".
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 dependencyResolutionManagement {
