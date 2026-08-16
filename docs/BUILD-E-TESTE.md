@@ -168,3 +168,67 @@ alinha para 16 KB por padrão. **Não conseguimos validar isso em hardware real
 aqui.** Se você tiver um Pixel 8 ou mais novo (ou outro aparelho com páginas de
 16 KB), esse é um teste de alto valor — é o item que decide a viabilidade do
 projeto a longo prazo. Ver `AUDITORIA.md` seção 3.2.
+
+---
+
+## ⚠️ CI falhou com `startup_failure`? Leia isto
+
+Se o build terminar em **`startup_failure` em ~0s, sem nenhum job criado e sem
+logs**, o problema **não é o workflow** — ele nem chegou a ser lido.
+
+Diagnóstico que fiz no repositório:
+
+| Verificação | Resultado |
+|---|---|
+| YAML do workflow | ✅ válido, sem tabs, sem BOM, sem CRLF |
+| Arquivo chegou ao GitHub | ✅ sim, os 90 bytes/linhas conferem |
+| Runner `ubuntu-22.04` | ✅ ainda ativo (não foi aposentado) |
+| Demais `.yml` do `.github/` | ✅ todos válidos |
+| **Workflows registrados pela API** | ❌ **lista vazia** |
+| **Jobs criados** | ❌ **zero** |
+| Visibilidade do repositório | 🔒 **privado** |
+
+A lista de workflows vazia com o arquivo presente aponta para um bloqueio de
+**conta/billing**, não de código. Em repositórios **privados**, o GitHub Actions
+consome cota (2.000 min/mês no plano Free) e **exige método de pagamento válido**.
+Quando há pendência de pagamento, os runs são criados e morrem em
+`startup_failure` sem log — exatamente o sintoma. Há um caso idêntico reportado
+em [community/discussions/201113](https://github.com/orgs/community/discussions/201113)
+(repo privado, conta Free, `startup_failure`, zero jobs, problema de método de pagamento).
+
+### Solução A — Tornar o repositório público ⭐ (recomendada)
+
+Actions é **gratuito e ilimitado** em repositórios públicos. Resolve na hora e
+não custa nada.
+
+**Settings → General → Danger Zone → Change repository visibility → Public**
+
+Antes de fazer isso, confirme que está tudo certo:
+
+* ✅ Nenhuma keystore de release versionada (já removemos as duas)
+* ✅ Nenhuma senha ou token no código (auditamos)
+* ⚠️ O `debug.keystore` fica público — é normal, é a chave de debug padrão do Android
+* ⚠️ Se você tiver um `curseforge_key.txt` local, ele está no `.gitignore` — confira
+
+### Solução B — Verificar billing (mantendo privado)
+
+1. **Settings da conta → Billing and plans → Payment information**
+   — resolva qualquer pendência de método de pagamento
+2. **Billing and plans → Plans and usage** — confira os minutos de Actions
+3. **Settings do repositório → Actions → General** — confirme
+   *"Allow all actions and reusable workflows"*
+
+### Solução C — Compilar localmente
+
+Não depende de CI nenhuma. Ver a **Opção B** no topo deste documento.
+
+### Como confirmar que voltou a funcionar
+
+Depois de aplicar A ou B, force um novo run:
+
+```bash
+git commit --allow-empty -m "Testa CI"
+git push
+```
+
+Em **Actions** deve aparecer um run **em execução** (não `startup_failure` instantâneo).
