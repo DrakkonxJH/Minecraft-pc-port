@@ -63,6 +63,19 @@ public class MicrosoftBackgroundLogin {
     public boolean doesOwnGame, hasProfile = false;
     public long expiresAt;
 
+    /**
+     * Avisado quando o login foi bem-sucedido mas a conta Microsoft nao possui
+     * licenca do Minecraft: Java Edition.
+     * <p>
+     * Em vez de criar uma conta "Demo.Player" (que ativa a flag --demo e limita o
+     * jogo), o launcher pede um nick ao usuario e cria uma conta offline completa.
+     */
+    public interface OfflineNameListener {
+        void onNoLicenseFound(String microsoftRefreshToken);
+    }
+
+    private OfflineNameListener offlineNameListener;
+
     public MicrosoftBackgroundLogin(boolean isRefresh, String authCode){
         mIsRefresh = isRefresh;
         mAuthCode = authCode;
@@ -72,6 +85,19 @@ public class MicrosoftBackgroundLogin {
     public void performLogin(@Nullable final ProgressListener progressListener,
                              @Nullable final DoneListener doneListener,
                              @Nullable final ErrorListener errorListener){
+        performLogin(progressListener, doneListener, errorListener, null);
+    }
+
+    /**
+     * Performs a full login.
+     * @param offlineNameListener notified when the account has no Java Edition license,
+     *                            so the caller can ask for an offline nickname
+     */
+    public void performLogin(@Nullable final ProgressListener progressListener,
+                             @Nullable final DoneListener doneListener,
+                             @Nullable final ErrorListener errorListener,
+                             @Nullable final OfflineNameListener offlineNameListener){
+        this.offlineNameListener = offlineNameListener;
         sExecutorService.execute(() -> {
             try {
                 notifyProgress(progressListener, 1);
@@ -89,8 +115,24 @@ public class MicrosoftBackgroundLogin {
                 if (!hasProfile && doesOwnGame) {
                     throw new PresentedException(R.string.minecraft_no_username_set);
                 } else if (!doesOwnGame) {
-                    mcName = "Demo.Player";
-                    mcUuid = "00000000-0000-0000-0000-000000000000";
+                    // A conta Microsoft nao tem licenca do Java Edition.
+                    //
+                    // O launcher NAO cria mais uma conta "Demo.Player": esse prefixo faz
+                    // Tools.getMinecraftClientArgs() acrescentar a flag --demo, que limita
+                    // o jogo (tempo e mundo fixo). Em vez disso, cria-se uma conta OFFLINE
+                    // com o nick escolhido pelo usuario, que roda o jogo sem restricoes em
+                    // singleplayer, LAN e servidores com online-mode=false.
+                    //
+                    // Servidores com online-mode=true continuam recusando a conta: quem
+                    // valida a sessao e o servidor da Mojang, nao o launcher.
+                    if (offlineNameListener != null) {
+                        Tools.runOnUiThread(() -> offlineNameListener.onNoLicenseFound(msRefreshToken));
+                    } else if (errorListener != null) {
+                        Tools.runOnUiThread(() -> errorListener.onLoginError(
+                                new PresentedException(R.string.microsoft_no_license_found)));
+                    }
+                    ProgressLayout.clearProgress(ProgressLayout.AUTHENTICATE_MICROSOFT);
+                    return;
                 } else if (mcName == null || mcUuid == null)
                     throw new IllegalStateException("This should never happen, please report this as a bug");
 
@@ -106,13 +148,6 @@ public class MicrosoftBackgroundLogin {
                 acc.expiresAt = expiresAt;
                 acc.updateSkinFace();
                 acc.save();
-
-                // MODO OFFLINE: registra que a posse do Minecraft Java foi comprovada
-                // neste dispositivo. A partir daqui o usuario pode criar perfis locais
-                // e jogar offline sem precisar reconectar na Microsoft.
-                if (doesOwnGame) {
-                    Tools.markOwnershipVerified();
-                }
 
                 if(doneListener != null) {
                     MinecraftAccount finalAcc = acc;

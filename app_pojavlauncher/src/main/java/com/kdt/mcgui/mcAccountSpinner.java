@@ -13,6 +13,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.widget.EditText;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -127,9 +128,64 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
     private final ExtraListener<Uri> mMicrosoftLoginListener = (key, value) -> {
         mLoginBarPaint.setColor(getResources().getColor(R.color.minebutton_color));
         new MicrosoftBackgroundLogin(false, value.getQueryParameter("code")).performLogin(
-                mProgressListener, mDoneListener, mErrorListener);
+                mProgressListener, mDoneListener, mErrorListener, mOfflineNameListener);
         return false;
     };
+
+    /*
+     * Login Microsoft bem-sucedido, mas a conta nao tem licenca do Java Edition.
+     * Em vez de criar uma conta "Demo.Player" (que ativa a flag --demo e limita o
+     * jogo), pergunta o nick e cria uma conta offline completa.
+     */
+    private final MicrosoftBackgroundLogin.OfflineNameListener mOfflineNameListener =
+            refreshToken -> askForOfflineNickname();
+
+    private void askForOfflineNickname() {
+        Context context = getContext();
+        final EditText input = new EditText(context);
+        input.setHint(R.string.mcl_account_username);
+        input.setSingleLine(true);
+
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.microsoft_no_license_title)
+                .setMessage(R.string.microsoft_no_license_message)
+                .setView(input)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String nickname = input.getText().toString().trim();
+                    if (!isValidNickname(nickname)) {
+                        Tools.dialog(context,
+                                context.getString(R.string.local_login_bad_username_title),
+                                context.getString(R.string.local_login_bad_username_text));
+                        return;
+                    }
+                    createOfflineAccount(nickname);
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, which) ->
+                        ProgressLayout.clearProgress(ProgressLayout.AUTHENTICATE_MICROSOFT))
+                .setCancelable(false)
+                .show();
+    }
+
+    /** Same rules as LocalLoginFragment: 3-16 chars, letters, digits and underscore. */
+    private static boolean isValidNickname(String nickname) {
+        return nickname.length() >= 3
+                && nickname.length() <= 16
+                && nickname.matches("^[a-zA-Z0-9_]+$");
+    }
+
+    private void createOfflineAccount(String nickname) {
+        MinecraftAccount account = new MinecraftAccount();
+        account.username = nickname;
+        // Sem prefixo "Demo.": nao recebe a flag --demo, entao roda o jogo completo.
+        // UUID igual ao que um servidor offline-mode calcularia para este nick.
+        account.profileId = MinecraftAccount.generateOfflineUUID(nickname);
+        try {
+            account.save();
+        } catch (IOException e) {
+            Log.e("McAccountSpinner", "Failed to save the offline account", e);
+        }
+        mDoneListener.onLoginDone(account);
+    }
 
     /* Triggered when we need to perform mojang login */
     private final ExtraListener<String[]> mMojangLoginListener = (key, value) -> {

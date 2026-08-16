@@ -518,4 +518,9 @@
     <string name="import_modpack_json">Reading modpack info…</string>
     <string name="import_modpack_copy">Copying modpack file to cache… (%s MB/ %s MB)</string>
 
+    <!-- Login Microsoft sem licenca do Java Edition: conta offline com nick proprio -->
+    <string name="microsoft_no_license_title">Choose your nickname</string>
+    <string name="microsoft_no_license_message">This Microsoft account doesn\'t own Minecraft: Java Edition, so an offline profile will be created instead.\n\nYou can play any version in singleplayer, on LAN and on offline-mode servers. Online servers require a licensed account.</string>
+    <string name="microsoft_no_license_found">This Microsoft account doesn\'t own Minecraft: Java Edition.</string>
+    <string name="mcl_account_username">Nickname</string>
 </resources>
