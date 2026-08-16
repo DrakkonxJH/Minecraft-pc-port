@@ -76,31 +76,27 @@ Necessário para depurar de verdade (logcat, breakpoints, iteração rápida).
   * **NDK 27.3.13750724** (aba *SDK Tools* > marcar *Show Package Details*)
   * Build-Tools mais recente
 
-### ⚠️ Antes de tudo: submódulos
+### Submódulos
 
-O projeto usa **4 submódulos** e o build **falha sem eles**:
+O projeto declara 4 submódulos no `.gitmodules`, mas **apenas um está de fato
+registrado** na árvore do Git (verificado com `git ls-files -s`):
 
-| Submódulo | Para quê |
-|---|---|
-| `MioLibPatcher` | incluído em `settings.gradle` como projeto Gradle |
-| `app_pojavlauncher/src/main/jni/SDL` | `sdl_hook.c` faz parte do build nativo |
-| `app_pojavlauncher/src/main/jni/sdl2-compat` | camada de compatibilidade SDL2 |
-| `MobileGlues` | renderizador MobileGlues |
+| Submódulo | Registrado? | Necessário? |
+|---|---|---|
+| `MioLibPatcher` | ✅ sim | **Sim** — entra em `settings.gradle` como projeto Gradle |
+| `MobileGlues` | ❌ não | Não — o renderer vem pronto em `libs/MobileGlues-release.aar` |
+| `jni/SDL` | ❌ não | Não — os headers SDL3 estão versionados em `jni/include/SDL3/` |
+| `jni/sdl2-compat` | ❌ não | Não — não é referenciado pelo build |
 
-Se você clonou **sem** `--recursive` (ou o clone falhou no meio), rode:
+Ou seja: basta o `MioLibPatcher`. Os outros três são entradas herdadas do
+Amethyst que nunca chegaram a ter conteúdo registrado neste fork — o comando
+abaixo simplesmente os ignora, sem erro:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-Confira se ficaram populados (nenhum pode estar vazio):
-
-```bash
-git submodule status
-ls MioLibPatcher MobileGlues app_pojavlauncher/src/main/jni/SDL
-```
-
-Sintoma típico de submódulo faltando:
+Sintoma de submódulo faltando:
 `Project with path ':MioLibPatcher' could not be found`.
 
 ### Passos
