@@ -526,4 +526,9 @@
     <!-- Entrar direto num servidor ao abrir o jogo (Minecraft 1.20+) -->
     <string name="pvc_quick_play_server">Join server on launch (1.20+)</string>
     <string name="pvc_quick_play_server_hint">example.com:25565</string>
+    <!-- Modo automatico de alocacao de RAM -->
+    <string name="mcl_memory_automatic">Automatic memory</string>
+    <string name="mcl_memory_automatic_subtitle">Adjusts the memory on every launch based on free RAM and how many mods are installed. Turn off to set it manually.</string>
+    <!-- Aviso de runtime Java experimental para a versao do jogo -->
+    <string name="experimental_runtime_warning">Java %1$d is experimental and may fail to launch. This version needs Java %2$d \u2014 switch the runtime in the profile if the game crashes.</string>
 </resources>

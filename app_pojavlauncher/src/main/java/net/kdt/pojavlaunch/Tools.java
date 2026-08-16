@@ -313,6 +313,27 @@ public final class Tools {
     }
 
     /**
+     * Count the .jar files in the current instance's mods folder.
+     * <p>
+     * Usado pelo modo automatico de RAM: instancias com muitos mods precisam de um
+     * heap maior. Falhas de leitura devolvem 0 (tratado como vanilla), pois isto
+     * nunca deve impedir o jogo de iniciar.
+     *
+     * @return the number of installed mods, or 0 when the folder is absent
+     */
+    public static int countInstalledMods() {
+        try {
+            File modsDir = new File(getGameDir(), "mods");
+            File[] modFiles = modsDir.listFiles(
+                    file -> file.isFile() && file.getName().toLowerCase().endsWith(".jar"));
+            return modFiles == null ? 0 : modFiles.length;
+        } catch (RuntimeException e) {
+            Log.w(APP_NAME, "Could not count the installed mods", e);
+            return 0;
+        }
+    }
+
+    /**
      * Tries to delete any sodium related mods of the currently selected profile via string matching
      * the files in the mods folder.
      */
@@ -2068,30 +2089,52 @@ public final class Tools {
         return vanillaVersion;
     }
 
+    /**
+     * Convert a Minecraft version string into a comparable integer.
+     * <p>
+     * Suporta os dois esquemas de versao da Mojang:
+     * <ul>
+     *   <li><b>semver</b> (ate 1.21.11): {@code 1.21.4} &rarr; {@code 1021004}</li>
+     *   <li><b>calver</b> (a partir de 26.1): {@code 26.1.1} &rarr; {@code 26001001}</li>
+     * </ul>
+     * O esquema mudou em 2026: a Mojang passou a numerar por ano e "drop", entao
+     * depois de 1.21.11 vem 26.1 -- e nao 1.22. Como o ano (26) e maior que o antigo
+     * major (1), a ordenacao numerica continua correta entre os dois formatos.
+     * <p>
+     * Sufixos de snapshot, pre-release e modloader sao ignorados
+     * ({@code 26.1-pre-2}, {@code 1.21-forge-51.0.33} &rarr; usam so a parte numerica).
+     *
+     * @param mcVersion the version string
+     * @return a comparable integer, or null when the string has no numeric prefix
+     */
     public static Integer mcVersiontoInt(String mcVersion){
-        String[] sVersionArray = mcVersion.split("\\.");
-        String[] iVersionArray = new String[3];
-        // Make sure this is actually a version string
-        for (int i = 0; i < iVersionArray.length; i++) {
+        if (mcVersion == null) return null;
+
+        // Corta sufixos: "26.1-pre-2", "1.21-forge-51.0.33", "1.21.4+build.2"
+        String numericPart = mcVersion.trim().split("[-+_ ]")[0];
+        String[] parts = numericPart.split("\\.");
+
+        int[] components = new int[3];
+        boolean parsedAny = false;
+        for (int i = 0; i < 3; i++) {
+            if (i >= parts.length) break;      // versoes curtas ficam com 0 no resto
+            // Le apenas o prefixo numerico do componente ("4a" -> 4)
+            String raw = parts[i];
+            int end = 0;
+            while (end < raw.length() && Character.isDigit(raw.charAt(end))) end++;
+            if (end == 0) break;               // componente nao numerico: para aqui
             try {
-                // Ensure there's padding
-                sVersionArray[i] =  String.format("%3s", sVersionArray[i]).replace(' ', '0');
-                // Grab only the last 3, MCJE 999.999.999 isnt coming soon anyway
-                sVersionArray[i] = sVersionArray[i].substring(sVersionArray[i].length() - 3);
-            } catch (ArrayIndexOutOfBoundsException ignored){
-                // If we don't get 3 a third array, pad with 0s because it's probably 1.21 or something
-                iVersionArray[i] = "000";
-                continue;
-            }
-            try {
-                // Verify its a real deal, legit number
-                Integer.parseInt(sVersionArray[i]);
-                iVersionArray[i] = sVersionArray[i];
+                components[i] = Integer.parseInt(raw.substring(0, end));
+                parsedAny = true;
             } catch (NumberFormatException e) {
-                throw new RuntimeException("Tools(mcVersiontoInt): Invalid version string");
+                break;                          // numero grande demais: ignora o resto
             }
         }
-        return Integer.parseInt(iVersionArray[0] + iVersionArray[1] + iVersionArray[2]);
+
+        // Sem nenhum numero reconhecivel (ex.: "rd-132211") nao ha o que comparar.
+        if (!parsedAny) return null;
+
+        return components[0] * 1_000_000 + components[1] * 1_000 + components[2];
     }
 
     public static boolean isPointerDeviceConnected() {

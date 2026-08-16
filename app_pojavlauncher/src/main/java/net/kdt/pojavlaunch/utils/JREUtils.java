@@ -339,8 +339,19 @@ public class JREUtils {
         purgeArg(userArgs, "-XX:ActiveProcessorCount");
 
         //Add automatically generated args
-        userArgs.add("-Xms" + LauncherPreferences.PREF_RAM_ALLOCATION + "M");
-        userArgs.add("-Xmx" + LauncherPreferences.PREF_RAM_ALLOCATION + "M");
+        // MODO AUTOMATICO: recalcula a alocacao a cada lancamento, considerando a
+        // memoria livre no momento e a quantidade de mods. Assim o jogo acompanha o
+        // estado real do aparelho em vez de usar um numero escolhido uma unica vez.
+        int ramAllocation = LauncherPreferences.PREF_RAM_ALLOCATION;
+        if (LauncherPreferences.PREF_RAM_AUTOMATIC) {
+            ramAllocation = LauncherPreferences.computeAutomaticRAM(activity, Tools.countInstalledMods());
+            Logger.appendToLog("Info: Automatic RAM allocation: " + ramAllocation + " MB");
+        }
+        // -Xms menor que -Xmx deixa a JVM crescer o heap sob demanda: o jogo comeca
+        // leve e so consome o maximo se realmente precisar.
+        int initialHeap = Math.max(512, ramAllocation / 2);
+        userArgs.add("-Xms" + initialHeap + "M");
+        userArgs.add("-Xmx" + ramAllocation + "M");
         if(LOCAL_RENDERER != null) userArgs.add("-Dorg.lwjgl.opengl.libname=" + graphicsLib);
 
         // Force LWJGL to use the Freetype library intended for it, instead of using the one

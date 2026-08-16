@@ -43,6 +43,8 @@ public class LauncherPreferences {
     public static boolean PREF_DISABLE_SWAP_HAND = false;
     public static float PREF_MOUSESPEED = 1f;
     public static int PREF_RAM_ALLOCATION;
+    /** Quando true, a RAM e recalculada a cada lancamento em vez de usar um valor fixo. */
+    public static boolean PREF_RAM_AUTOMATIC;
     public static String PREF_DEFAULT_RUNTIME;
     public static boolean PREF_SUSTAINED_PERFORMANCE = false;
     public static boolean PREF_VIRTUAL_MOUSE_START = false;
@@ -92,6 +94,8 @@ public class LauncherPreferences {
         PREF_GAMEPAD_FORCEDSDL_PASSTHRU = DEFAULT_PREF.getBoolean("gamepadPassthruForced",false);
         PREF_DISABLE_SWAP_HAND = DEFAULT_PREF.getBoolean("disableDoubleTap", false);
         PREF_RAM_ALLOCATION = DEFAULT_PREF.getInt("allocation", findBestRAMAllocation(ctx));
+        // Ativo por padrao: acerta a alocacao sozinho conforme o aparelho e os mods.
+        PREF_RAM_AUTOMATIC = DEFAULT_PREF.getBoolean("allocationAutomatic", true);
         PREF_CUSTOM_JAVA_ARGS = DEFAULT_PREF.getString("javaArgs", "");
         PREF_SUSTAINED_PERFORMANCE = DEFAULT_PREF.getBoolean("sustainedPerformance", isDevicePowerful);
         PREF_VIRTUAL_MOUSE_START = DEFAULT_PREF.getBoolean("mouse_start", false);
@@ -152,7 +156,7 @@ public class LauncherPreferences {
      * @param ctx Context needed to get the total memory of the device.
      * @return The best default value found.
      */
-    private static int findBestRAMAllocation(Context ctx){
+    public static int findBestRAMAllocation(Context ctx){
         int deviceRam = Tools.getTotalDeviceMemory(ctx);
         if (deviceRam < 1024) return 296;
         if (deviceRam < 1536) return 448;
@@ -163,7 +167,68 @@ public class LauncherPreferences {
         if (deviceRam < 3064) return 936;
         if (deviceRam < 4096) return 1144;
         if (deviceRam < 6144) return 1536;
-        return 2048; //Default RAM allocation for 64 bits
+
+        // Aparelhos modernos (8 GB ou mais) aguentam bem mais que os 2048 MB
+        // historicos, mas dar RAM demais e contraproducente: o heap fica maior que
+        // o working set do jogo, as pausas de GC crescem e o Android passa a matar
+        // o processo por pressao de memoria.
+        //
+        // A regra abaixo mira ~35% da RAM total, limitada a 4 GB. O Minecraft
+        // raramente se beneficia de mais que isso, mesmo com modpacks grandes.
+        if (deviceRam < 8192) return 2048;
+        if (deviceRam < 12288) return 3072;
+        return 4096;
+    }
+
+    /**
+     * RAM que o modo automatico deve usar para uma sessao especifica.
+     * <p>
+     * Diferente de {@link #findBestRAMAllocation(Context)}, que so olha para o
+     * hardware, este metodo tambem considera:
+     * <ul>
+     *   <li>a memoria realmente <b>disponivel</b> agora (outros apps abertos);</li>
+     *   <li>a quantidade de mods instalados, que eleva bastante o uso de heap.</li>
+     * </ul>
+     * Assim a alocacao acompanha o estado do aparelho em vez de ser um valor fixo
+     * escolhido uma unica vez na primeira execucao.
+     *
+     * @param ctx contexto para consultar a memoria do dispositivo
+     * @param modCount numero de mods na instancia, ou 0 se for vanilla
+     * @return alocacao recomendada em MB
+     */
+    public static int computeAutomaticRAM(Context ctx, int modCount) {
+        int baseline = findBestRAMAllocation(ctx);
+
+        // Modpacks pesados precisam de mais heap. O acrescimo e limitado para nao
+        // anular a protecao contra alocacao excessiva.
+        int modBonus = 0;
+        if (modCount >= 150)      modBonus = 2048;
+        else if (modCount >= 75)  modBonus = 1536;
+        else if (modCount >= 30)  modBonus = 1024;
+        else if (modCount >= 10)  modBonus = 512;
+
+        int target = baseline + modBonus;
+
+        // Nunca passar de 55% da RAM total: acima disso o Android tende a matar o
+        // processo do jogo quando outro app pede memoria.
+        int deviceRam = Tools.getTotalDeviceMemory(ctx);
+        int hardCeiling = (int) (deviceRam * 0.55f);
+        target = Math.min(target, hardCeiling);
+
+        // Respeitar o que esta livre agora, deixando 1,5 GB para o sistema.
+        // O teto e aplicado SEMPRE que houver leitura valida de memoria livre; se o
+        // resultado ficar abaixo do piso, o piso prevalece logo abaixo. Condicionar
+        // este bloco a "teto > 512" faria o limite ser ignorado justamente quando a
+        // memoria esta mais escassa -- o caso em que ele mais importa.
+        int available = Tools.getFreeDeviceMemory(ctx);
+        if (available > 0) {
+            target = Math.min(target, available - 1536);
+        }
+
+        // Piso: abaixo disto o jogo nao inicia de forma confiavel. Se o aparelho
+        // estiver com pouquissima memoria livre, ainda tentamos iniciar com 512 MB
+        // em vez de recusar o lancamento.
+        return Math.max(target, 512);
     }
 
     /// Find a correct resolution for the device

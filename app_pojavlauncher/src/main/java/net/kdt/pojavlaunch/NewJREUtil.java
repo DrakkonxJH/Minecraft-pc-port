@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.kdt.mcgui.ProgressLayout;
 
@@ -27,6 +28,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class NewJREUtil {
+    /**
+     * A partir desta versao o Java e considerado experimental para o Minecraft.
+     * Nenhuma versao do jogo exige Java 25 hoje, e o carregamento de modulos dessa
+     * versao conflita com o agente caciocavallo usado pelo launcher.
+     */
+    private static final int EXPERIMENTAL_JAVA_VERSION = 25;
+
     private static boolean checkInternalRuntime(AssetManager assetManager, InternalRuntime internalRuntime) {
         String launcher_runtime_version;
         String installed_runtime_version = MultiRTUtils.readInternalRuntimeVersion(internalRuntime.name);
@@ -89,6 +97,28 @@ public class NewJREUtil {
         MinecraftProfile minecraftProfile = LauncherProfiles.getCurrentProfile();
         String profileRuntime = Tools.getSelectedRuntime(minecraftProfile);
         Runtime runtime = MultiRTUtils.read(profileRuntime);
+
+        // Avisa sobre runtimes muito novos para a versao do jogo.
+        //
+        // A checagem abaixo so exige "runtime >= exigido", entao um Java 25 passa
+        // para um jogo que pede 21. Na pratica isso quebra: o carregamento de
+        // modulos mudou no Java 25 e o agente caciocavallo (necessario para o AWT
+        // sem tela) provoca ClassCircularityError durante a inicializacao do log4j:
+        //
+        //   java.lang.ClassCircularityError: java/lang/WeakPairMap$Pair$Weak
+        //       at java.base/java.lang.Module.implAddReads
+        //
+        // O erro nao cita o runtime, entao e muito dificil de diagnosticar. Avisamos
+        // sem bloquear: o usuario pode ter um motivo para forcar a escolha.
+        if (runtime.javaVersion >= EXPERIMENTAL_JAVA_VERSION
+                && gameRequiredVersion < EXPERIMENTAL_JAVA_VERSION) {
+            final int selected = runtime.javaVersion;
+            Tools.runOnUiThread(() -> Toast.makeText(activity,
+                    activity.getString(R.string.experimental_runtime_warning,
+                            selected, gameRequiredVersion),
+                    Toast.LENGTH_LONG).show());
+        }
+
         // Partly trust the user with his own selection, if the game can even try to run in this case
         if (runtime.javaVersion >= gameRequiredVersion) {
             // Check whether the selection is an internal runtime

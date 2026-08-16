@@ -54,6 +54,25 @@ public class LauncherPreferenceJavaFragment extends LauncherPreferenceFragment {
         memorySeekbar.setValue(ramAllocation);
         memorySeekbar.setSuffix(" MB");
 
+        // MODO AUTOMATICO: quando ligado, o launcher recalcula a RAM a cada
+        // lancamento (memoria livre + quantidade de mods), entao o slider manual
+        // fica desabilitado para deixar claro que o valor nao sera usado.
+        SwitchPreference automaticMemory = findPreference("allocationAutomatic");
+        if (automaticMemory != null) {
+            memorySeekbar.setEnabled(!automaticMemory.isChecked());
+            automaticMemory.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean automatic = Boolean.TRUE.equals(newValue);
+                memorySeekbar.setEnabled(!automatic);
+                if (automatic) {
+                    // Mostra de imediato quanto o modo automatico reservaria agora.
+                    int suggestion = LauncherPreferences.computeAutomaticRAM(
+                            preference.getContext(), Tools.countInstalledMods());
+                    memorySeekbar.setValue(suggestion);
+                }
+                return true;
+            });
+        }
+
         EditTextPreference editJVMArgs = findPreference("javaArgs");
         if (editJVMArgs != null) {
             editJVMArgs.setOnBindEditTextListener(TextView::setSingleLine);
