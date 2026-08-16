@@ -54,7 +54,8 @@ project.afterEvaluate {
     }
 
     // Configure tasks for each architecture and all potential variants
-    def variants = ["Debug", "Release", "RelWithDebInfo", "Proguard", "ProguardNoDebug", "Gplay"]
+    // "Gplay" removido junto com o buildType homonimo (ver app_pojavlauncher/build.gradle).
+    def variants = ["Debug", "Release", "RelWithDebInfo", "Proguard", "ProguardNoDebug"]
     for(arch in archList) {
         def abiName = "$arch"
         def dirName = "android.$arch"

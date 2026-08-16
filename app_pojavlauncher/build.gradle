@@ -205,11 +205,11 @@ android {
             resValue 'string', 'storageProviderAuthorities', 'com.drakkonx.minedrakk.scoped.gamefolder'
             resValue 'string', 'application_package', 'com.drakkonx.minedrakk'
         }
-        gplay {
-            initWith release
-            signingConfig signingConfigs.googlePlayBuild
-            matchingFallbacks = [ 'release' ]
-        }
+        // O buildType 'gplay' do Amethyst foi removido: ele referenciava a
+        // signingConfig 'googlePlayBuild', que apontava para a keystore
+        // upload.jks — retirada do repositorio pela AUDITORIA B3.
+        // Para publicar na Play Store, configure a sua propria chave em
+        // keystore.properties (ver README) e use o buildType 'release'.
     }
 
     ndkVersion = "27.3.13750724"
