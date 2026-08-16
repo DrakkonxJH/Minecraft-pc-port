@@ -5,6 +5,15 @@ pluginManagement {
     }
 }
 
+// Permite ao Gradle BAIXAR automaticamente os JDKs exigidos por toolchains.
+// O submodulo MioLibPatcher declara toolchain Java 8; sem isto o build falha com
+// "Cannot find a Java installation ... matching: {languageVersion=8}" em qualquer
+// maquina que nao tenha um JDK 8 instalado (Foojay e o provedor oficial usado
+// pela documentacao do Gradle).
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {

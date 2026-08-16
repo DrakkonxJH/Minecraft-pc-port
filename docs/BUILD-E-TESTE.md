@@ -165,6 +165,36 @@ adb install -r app_pojavlauncher/build/outputs/apk/debug/app_pojavlauncher-debug
 
 No Windows use `gradlew.bat` no lugar de `./gradlew`.
 
+### Toolchain Java 8 (resolvido automaticamente)
+
+O submódulo `MioLibPatcher` declara `toolchain { languageVersion = 8 }`. Se a
+máquina não tiver um JDK 8, o Gradle falha com:
+
+```
+Cannot find a Java installation on your machine matching: {languageVersion=8}
+Toolchain download repositories have not been configured.
+```
+
+O `settings.gradle` deste fork já resolve isso: o plugin
+`foojay-resolver-convention` faz o **Gradle baixar o JDK 8 sozinho** na primeira
+compilação (~40 MB, uma única vez, guardado em `~/.gradle/jdks`).
+
+Se preferir instalar o JDK 8 manualmente em vez de deixar o Gradle baixar:
+
+```bash
+# Debian/Ubuntu
+sudo apt install openjdk-8-jdk
+
+# Fedora
+sudo dnf install java-1.8.0-openjdk-devel
+
+# Arch
+sudo pacman -S jdk8-openjdk
+```
+
+Isso **não substitui** o JDK 21 usado para rodar o Gradle — os dois convivem, e
+o Gradle escolhe o certo para cada módulo.
+
 ---
 
 ## O que observar nos testes
