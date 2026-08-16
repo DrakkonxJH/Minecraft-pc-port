@@ -118,7 +118,7 @@ configurations {
 android {
     namespace 'net.kdt.pojavlaunch'
 
-    compileSdk = 37
+    compileSdk = 36
 
 
     signingConfigs {
