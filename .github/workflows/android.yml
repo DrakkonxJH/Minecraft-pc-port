@@ -1,0 +1,90 @@
+# ---------------------------------------------------------------------------
+# MineDrakk Java - CI de build do APK
+#
+# ESTE ARQUIVO E UM TEMPLATE. Para ativar:
+#     mkdir -p .github/workflows
+#     cp docs/ci-android.yml.template .github/workflows/android.yml
+#     git add .github/workflows/android.yml && git commit && git push
+#
+# (O agente que montou o fork nao tem a permissao "workflows" no GitHub App,
+#  por isso o arquivo nao pode ser criado automaticamente.)
+#
+# Depois de ativado, cada push gera um APK em Actions > run > Artifacts.
+# Baixe "MineDrakk-debug-apk", descompacte e instale no celular.
+# ---------------------------------------------------------------------------
+name: Android CI
+
+on:
+  push:
+    branches-ignore:
+      - 'l10n_v3_openjdk'
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          fetch-depth: 0   # necessario para o versionName derivado do git
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # AUDITORIA B1: os JREs vem das *releases* do angelauramc-openjdk-build,
+      # que sao permanentes, e nao de artefatos de Actions, que expiram em 90 dias.
+      - name: Fetch Java runtimes
+        run: bash scripts/fetch_jre.sh 8 17 21
+
+      - name: Generate language list
+        run: bash scripts/languagelist_updater.sh
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
+          gradle-version: "9.6.1"
+
+      - name: Build debug APK
+        run: gradle :app_pojavlauncher:assembleDebug --stacktrace
+
+      - name: Collect outputs
+        run: |
+          mkdir -p out
+          cp app_pojavlauncher/build/outputs/apk/debug/*.apk out/MineDrakk-debug.apk
+          (cd out && sha256sum MineDrakk-debug.apk > MineDrakk-debug.apk.sha256)
+          ls -lh out
+
+      # Este e o artefato que voce baixa para instalar no celular.
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MineDrakk-debug-apk
+          path: out/MineDrakk-debug.*
+          retention-days: 30
+
+      # APK sem os runtimes embutidos: bem menor, util para iterar rapido.
+      # O app pede para instalar um runtime na primeira execucao.
+      - name: Build APK without runtimes
+        run: |
+          rm -rf app_pojavlauncher/src/main/assets/components/jre \
+                 app_pojavlauncher/src/main/assets/components/jre-new \
+                 app_pojavlauncher/src/main/assets/components/jre-21
+          gradle :app_pojavlauncher:assembleDebug
+          cp app_pojavlauncher/build/outputs/apk/debug/*.apk out/MineDrakk-debug-noruntime.apk
+
+      - name: Upload no-runtime APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MineDrakk-debug-apk-noruntime
+          path: out/MineDrakk-debug-noruntime.apk
+          retention-days: 30
