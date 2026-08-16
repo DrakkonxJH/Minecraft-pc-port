@@ -8,7 +8,7 @@ static def getDate() { return new Date().format('yyyyMMdd') }
  * Versao semantica do MineDrakk. Unica fonte da verdade: mude aqui ao lancar.
  * O versionCode e derivado dela, entao nao ha dois numeros para manter em sincronia.
  */
-ext.minedrakkVersion = "0.1.1"
+ext.minedrakkVersion = "0.1.2"
 
 // Avaliado uma unica vez, no corpo do script (nao em metodo static: metodos
 // estaticos nao enxergam `gradle`, o que causava
