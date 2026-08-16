@@ -57,6 +57,11 @@ static void gl4esi_get_display_dimensions(int* width, int* height) {
 
 gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     gl_render_window_t* bundle = malloc(sizeof(gl_render_window_t));
+    // AUDITORIA 5.6: malloc pode falhar; memset em ponteiro nulo e crash imediato.
+    if (bundle == NULL) {
+        LOGE("%s", "gl_init_context(): out of memory");
+        return NULL;
+    }
     memset(bundle, 0, sizeof(gl_render_window_t));
     EGLint egl_attributes[] = { EGL_BLUE_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_RED_SIZE, 8, EGL_ALPHA_SIZE, 8, EGL_DEPTH_SIZE, 24, EGL_SURFACE_TYPE, EGL_WINDOW_BIT|EGL_PBUFFER_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, EGL_NONE };
     EGLint num_configs = 0;
@@ -78,7 +83,10 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
 
     {
         EGLBoolean bindResult;
-        if (strncmp(getenv("AMETHYST_RENDERER"), "opengles3_desktopgl", 19) == 0) {
+        // AUDITORIA 5.5: getenv() pode devolver NULL e strncmp(NULL, ...) e SIGSEGV.
+        // MINEDRAKK_RENDERER so e definida quando um renderer foi selecionado.
+        const char* renderer_name = getenv("MINEDRAKK_RENDERER");
+        if (renderer_name != NULL && strncmp(renderer_name, "opengles3_desktopgl", 19) == 0) {
             printf("EGLBridge: Binding to desktop OpenGL\n");
             bindResult = eglBindAPI_p(EGL_OPENGL_API);
         } else {
@@ -88,7 +96,9 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
         if (!bindResult) printf("EGLBridge: bind failed: %p\n", eglGetError_p());
     }
 
-    int libgl_es = strtol(getenv("LIBGL_ES"), NULL, 0);
+    // AUDITORIA 5.5: idem para LIBGL_ES, que so e populada quando LOCAL_RENDERER != null.
+    const char* libgl_es_env = getenv("LIBGL_ES");
+    int libgl_es = libgl_es_env == NULL ? 2 : (int) strtol(libgl_es_env, NULL, 0);
     if(libgl_es < 0 || libgl_es > INT16_MAX) libgl_es = 2;
     const EGLint egl_context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, libgl_es, EGL_NONE };
     bundle->context = eglCreateContext_p(g_EglDisplay, bundle->config, share == NULL ? EGL_NO_CONTEXT : share->context, egl_context_attributes);

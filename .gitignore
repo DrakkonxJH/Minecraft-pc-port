@@ -20,3 +20,7 @@ app_pojavlauncher/.cxx/
 *.keystore
 !app_pojavlauncher/debug.keystore
 keystore.properties
+
+# Binarios de verificacao local
+.verify/tu
+.verify/*.tar.gz

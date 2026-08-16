@@ -16,11 +16,19 @@ long shared_awt_surface;
 char** convert_to_char_array(JNIEnv *env, jobjectArray jstringArray) {
 	int num_rows = (*env)->GetArrayLength(env, jstringArray);
 	char **cArray = (char **) malloc(num_rows * sizeof(char*));
+	// AUDITORIA 5.6: malloc pode falhar; sem esta guarda o loop abaixo escreve em NULL.
+	if (cArray == NULL) {
+		LOGE("convert_to_char_array(): out of memory for %d rows", num_rows);
+		return NULL;
+	}
 	jstring row;
-	
+
 	for (int i = 0; i < num_rows; i++) {
 		row = (jstring) (*env)->GetObjectArrayElement(env, jstringArray, i);
 		cArray[i] = (char*)(*env)->GetStringUTFChars(env, row, 0);
+		// Release the local reference to avoid exhausting the local reference table
+		// on large argument arrays.
+		(*env)->DeleteLocalRef(env, row);
     }
 	
     return cArray;
@@ -39,13 +47,19 @@ jobjectArray convert_from_char_array(JNIEnv *env, char **charArray, int num_rows
 }
 
 void free_char_array(JNIEnv *env, jobjectArray jstringArray, const char **charArray) {
+	// AUDITORIA 5.7: alem de liberar as strings, o proprio array alocado por
+	// convert_to_char_array() precisa ser liberado, caso contrario vaza
+	// num_rows * sizeof(char*) a cada chamada.
+	if (charArray == NULL) return;
 	int num_rows = (*env)->GetArrayLength(env, jstringArray);
 	jstring row;
-	
+
 	for (int i = 0; i < num_rows; i++) {
 		row = (jstring) (*env)->GetObjectArrayElement(env, jstringArray, i);
 		(*env)->ReleaseStringUTFChars(env, row, charArray[i]);
+		(*env)->DeleteLocalRef(env, row);
 	}
+	free((void*) charArray);
 }
 
 jstring convertStringJVM(JNIEnv* srcEnv, JNIEnv* dstEnv, jstring srcStr) {

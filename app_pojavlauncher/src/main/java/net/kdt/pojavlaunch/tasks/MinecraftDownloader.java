@@ -500,7 +500,9 @@ public class MinecraftDownloader {
          */
         private void tryGetLibrarySha1() throws IOException {
             File sha1CacheDir = new File(Tools.DIR_CACHE + "/sha1hashes");
-            File cacheFile = new File(sha1CacheDir.getAbsolutePath() + FileUtils.getFileName(mTargetUrl) + ".sha");
+            // AUDITORIA 5.4: getFileName() nao devolve mais o nome prefixado por '/', entao
+            // o separador precisa ser explicito ao montar o caminho do cache.
+            File cacheFile = new File(sha1CacheDir, FileUtils.getFileName(mTargetUrl) + ".sha");
 
             // Only use cache when its offline. No point in having cache invalidation now!
             if (!isOnline || !LauncherPreferences.PREF_CHECK_LIBRARY_SHA) { // Well not only offlines..this setting speeds up launch times at least!

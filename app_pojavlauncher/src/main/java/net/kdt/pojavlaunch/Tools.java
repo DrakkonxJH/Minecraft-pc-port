@@ -1156,21 +1156,77 @@ public final class Tools {
     private static boolean checkRules(JMinecraftVersionList.Arguments.ArgValue.ArgRules[] rules) {
         if(rules == null) return true; // always allow
         for (JMinecraftVersionList.Arguments.ArgValue.ArgRules rule : rules) {
-            if (rule.action.equals("allow") && rule.os != null && rule.os.name.equals("osx")) {
+            // AUDITORIA 5.1: rule.action, rule.os e rule.os.name podem ser nulos. Version JSONs
+            // que declaram apenas os.arch ou os.version (comuns em Forge antigo e em algumas
+            // versoes modernas) causavam NullPointerException aqui.
+            if (rule.action == null || rule.os == null || rule.os.name == null) continue;
+            if (rule.action.equals("allow") && rule.os.name.equals("osx")) {
                 return false; //disallow
             }
         }
         return true; // allow if none match
     }
 
+    /**
+     * Parse a dot separated version component into an integer, tolerating the qualifiers
+     * commonly found in the wild ("5.13.0-SNAPSHOT", "2.0.0-beta", "1.0.0+build1").
+     * AUDITORIA 5.2.
+     * @param components the version split around dots
+     * @param index the component to read
+     * @return the parsed number, or -1 when it is absent or not numeric
+     */
+    private static int versionComponent(String[] components, int index) {
+        if (components == null || index >= components.length) return -1;
+        String raw = components[index].trim();
+        int end = 0;
+        while (end < raw.length() && Character.isDigit(raw.charAt(end))) end++;
+        if (end == 0) return -1;
+        try {
+            return Integer.parseInt(raw.substring(0, end));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * Compare a parsed version against a minimum, using proper version ordering.
+     * AUDITORIA 5.3: the previous code used "major >= x && minor >= y", which is not how
+     * versions compare. A 6.2.x library (major 6 >= 5, but minor 2 < 13) failed the check
+     * and got force-downgraded to 5.13.0.
+     * @param components the version split around dots
+     * @param minMajor minimum major version
+     * @param minMinor minimum minor version, applied only when the major matches exactly
+     * @return true when the version is greater than or equal to the minimum
+     */
+    private static boolean versionAtLeast(String[] components, int minMajor, int minMinor) {
+        int major = versionComponent(components, 0);
+        if (major < 0) return false; // unparseable, treat as "not new enough" and let the patch apply
+        if (major != minMajor) return major > minMajor;
+        int minor = versionComponent(components, 1);
+        if (minor < 0) return false;
+        return minor >= minMinor;
+    }
+
     public static void preProcessLibraries(DependentLibrary[] libraries) {
         for (int i = 0; i < libraries.length; i++) {
             DependentLibrary libItem = libraries[i];
-            String[] version = libItem.name.split(":")[2].split("\\.");
+
+            // AUDITORIA 5.2: libItem.name pode ser nulo ou nao ter os tres componentes
+            // "grupo:artefato:versao" (mods publicam coordenadas incompletas). O split
+            // direto em [2] lancava ArrayIndexOutOfBoundsException e derrubava o parse
+            // de toda a version JSON.
+            if (libItem == null || libItem.name == null) continue;
+            String[] nameParts = libItem.name.split(":");
+            if (nameParts.length < 3) {
+                Log.w(APP_NAME, "Skipping library with malformed coordinates: " + libItem.name);
+                continue;
+            }
+            String[] version = nameParts[2].split("\\.");
+
             if (libItem.name.startsWith("net.java.dev.jna:jna:")) {
                 // Special handling for LabyMod 1.8.9, Forge 1.12.2(?) and oshi
                 // we have libjnidispatch 5.13.0 in jniLibs directory
-                if (Integer.parseInt(version[0]) >= 5 && Integer.parseInt(version[1]) >= 13) continue;
+                if (versionAtLeast(version, 5, 13)) continue;
                 Log.d(APP_NAME, "Library " + libItem.name + " has been changed to version 5.13.0");
                 createLibraryInfo(libItem);
                 libItem.name = "net.java.dev.jna:jna:5.13.0";
@@ -1181,7 +1237,9 @@ public final class Tools {
                 //if (Integer.parseInt(version[0]) >= 6 && Integer.parseInt(version[1]) >= 3) return;
                 // FIXME: ensure compatibility
 
-                if (Integer.parseInt(version[0]) != 6 || Integer.parseInt(version[1]) != 2) continue;
+                // AUDITORIA 5.2: parse tolerante, evita NumberFormatException em versoes
+                // como "6.2.0-SNAPSHOT".
+                if (versionComponent(version, 0) != 6 || versionComponent(version, 1) != 2) continue;
                 Log.d(APP_NAME, "Library " + libItem.name + " has been changed to version 6.3.0");
                 createLibraryInfo(libItem);
                 libItem.name = "com.github.oshi:oshi-core:6.3.0";
@@ -1192,7 +1250,8 @@ public final class Tools {
                 // Early versions of the ASM library get repalced with 5.0.4 because Pojav's LWJGL is compiled for
                 // Java 8, which is not supported by old ASM versions. Mod loaders like Forge, which depend on this
                 // library, often include lwjgl in their class transformations, which causes errors with old ASM versions.
-                if(Integer.parseInt(version[0]) >= 5) continue;
+                // AUDITORIA 5.2: parse tolerante (ver versionComponent).
+                if(versionComponent(version, 0) >= 5) continue;
                 Log.d(APP_NAME, "Library " + libItem.name + " has been changed to version 5.0.4");
                 createLibraryInfo(libItem);
                 libItem.name = "org.ow2.asm:asm-all:5.0.4";

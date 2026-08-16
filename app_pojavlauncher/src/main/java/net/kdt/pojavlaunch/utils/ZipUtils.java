@@ -39,17 +39,43 @@ public class ZipUtils {
     public static void zipExtract(ZipFile zipFile, String dirName, File destination) throws IOException {
         Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
 
+        // AUDITORIA 4.3 (Zip Slip): resolvemos o diretorio de destino uma unica vez
+        // para comparar contra o caminho canonico de cada entrada extraida.
+        String canonicalDestination = destination.getCanonicalPath() + File.separator;
+
         int dirNameLen = dirName.length();
         while(zipEntries.hasMoreElements()) {
             ZipEntry zipEntry = zipEntries.nextElement();
             String entryName = zipEntry.getName();
             if(!entryName.startsWith(dirName) || zipEntry.isDirectory()) continue;
             File zipDestination = new File(destination, entryName.substring(dirNameLen));
+
+            // AUDITORIA 4.3 (Zip Slip): um archive malicioso pode conter entradas como
+            // "../../../../data/data/<pacote>/files/x". Sem esta verificacao a extracao
+            // escreveria fora do diretorio de destino. Como o launcher instala modpacks
+            // de terceiros (CurseForge/Modrinth), o vetor e real.
+            if(!isInsideDirectory(zipDestination, canonicalDestination)) {
+                throw new IOException("Blocked Zip Slip attempt, entry resolves outside of the "
+                        + "destination directory: " + entryName);
+            }
+
             FileUtils.ensureParentDirectory(zipDestination);
             try (InputStream inputStream = zipFile.getInputStream(zipEntry);
                  OutputStream outputStream = new FileOutputStream(zipDestination)) {
                 IOUtils.copy(inputStream, outputStream);
             }
         }
+    }
+
+    /**
+     * Check that a resolved file stays within a given canonical directory.
+     * Used to prevent Zip Slip (path traversal) when extracting untrusted archives.
+     * @param target the file that is about to be written
+     * @param canonicalDirectoryWithSeparator the canonical destination directory, with a trailing separator
+     * @return true when the target is contained by the destination directory
+     * @throws IOException if the canonical path of the target cannot be resolved
+     */
+    public static boolean isInsideDirectory(File target, String canonicalDirectoryWithSeparator) throws IOException {
+        return target.getCanonicalPath().startsWith(canonicalDirectoryWithSeparator);
     }
 }

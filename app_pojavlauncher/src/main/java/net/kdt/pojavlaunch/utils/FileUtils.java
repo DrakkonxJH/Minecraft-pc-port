@@ -19,9 +19,15 @@ public class FileUtils {
      * @return the file's name
      */
     public static String getFileName(String pathOrUrl) {
+        // AUDITORIA 5.4: a implementacao anterior fazia substring(lastSlashIndex), incluindo
+        // a propria barra no resultado, e retornava null quando nao havia barra alguma.
+        // O nome com barra fazia LIBRARY_BLACKLIST.contains(name) nunca casar em
+        // NativesExtractor, desativando silenciosamente a protecao contra sobrescrita
+        // de bibliotecas internas.
+        if(pathOrUrl == null) return null;
         int lastSlashIndex = pathOrUrl.lastIndexOf('/');
-        if(lastSlashIndex == -1) return null;
-        return pathOrUrl.substring(lastSlashIndex);
+        if(lastSlashIndex == -1) return pathOrUrl; // already a bare file name
+        return pathOrUrl.substring(lastSlashIndex + 1);
     }
 
     /**

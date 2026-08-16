@@ -157,13 +157,19 @@ void load_vulkan() {
 
 int pojavInitOpenGL() {
     // Only affects GL4ES as of now
+    // AUDITORIA 5.5: getenv() pode devolver NULL; strcmp(NULL, ...) e SIGSEGV.
     const char *forceVsync = getenv("FORCE_VSYNC");
-    if (strcmp(forceVsync, "true") == 0)
+    if (forceVsync != NULL && strcmp(forceVsync, "true") == 0)
         pojav_environ->force_vsync = true;
 
     // NOTE: Override for now.
-    const char *renderer = getenv("AMETHYST_RENDERER");
-    if (strncmp("opengles", renderer, 8) == 0) {
+    // AUDITORIA 5.5: sem renderer definido, cai no caminho padrao (GL4ES) em vez de crashar.
+    const char *renderer = getenv("MINEDRAKK_RENDERER");
+    if (renderer == NULL) {
+        printf("EGLBridge: MINEDRAKK_RENDERER is unset, defaulting to GL4ES\n");
+        pojav_environ->config_renderer = RENDERER_GL4ES;
+        set_gl_bridge_tbl();
+    } else if (strncmp("opengles", renderer, 8) == 0) {
         pojav_environ->config_renderer = RENDERER_GL4ES;
         if (!strcmp(renderer, "opengles3_desktopgl_zink_kopper")) {
             load_vulkan();
@@ -209,8 +215,11 @@ EXTERNAL_API void pojavSetWindowHint(int hint, int value) {
             // pojavInitVulkan();
             break;
         case GLFW_OPENGL_API:
-            const char *renderer = getenv("AMETHYST_RENDERER");
-            if (strncmp("opengles", renderer, 8) == 0) {
+            // AUDITORIA 5.5: guarda contra getenv() nulo.
+            const char *renderer = getenv("MINEDRAKK_RENDERER");
+            if (renderer == NULL) {
+                pojav_environ->config_renderer = RENDERER_GL4ES;
+            } else if (strncmp("opengles", renderer, 8) == 0) {
                 pojav_environ->config_renderer = RENDERER_GL4ES;
             } else if (strcmp(renderer, "vulkan_zink") == 0) {
                 pojav_environ->config_renderer = RENDERER_VK_ZINK;
