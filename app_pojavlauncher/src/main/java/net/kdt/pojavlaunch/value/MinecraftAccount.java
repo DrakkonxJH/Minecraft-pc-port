@@ -116,6 +116,32 @@ public class MinecraftAccount {
             if (acc.profileId == null) {
                 acc.profileId = "00000000-0000-0000-0000-000000000000";
             }
+            // Migra contas "Demo.<nome>" criadas por versoes anteriores do launcher.
+            //
+            // O prefixo "Demo." faz isDemo() retornar true, o que adiciona a flag
+            // --demo (jogo limitado a ~100 minutos, mundo fixo) e desvia o diretorio
+            // do jogo para /demo/.minecraft. Como agora criamos contas offline
+            // completas nesse cenario, contas antigas ficariam presas no modo demo
+            // para sempre. Renomeia removendo o prefixo e apaga o arquivo antigo.
+            if (acc.username != null && acc.username.startsWith("Demo.")) {
+                String oldName = acc.username;
+                String newName = oldName.substring("Demo.".length());
+                if (newName.isEmpty()) newName = "Player";
+                acc.username = newName;
+                acc.profileId = generateOfflineUUID(newName);
+                try {
+                    acc.save();
+                    File oldFile = new File(Tools.DIR_ACCOUNT_NEW + "/" + oldName + ".json");
+                    if (oldFile.exists() && !oldFile.delete()) {
+                        Log.w("MinecraftAccount", "Could not delete the old demo account file");
+                    }
+                    Log.i("MinecraftAccount", "Migrated demo account to offline: " + newName);
+                } catch (IOException e) {
+                    Log.w("MinecraftAccount", "Could not persist the migrated demo account", e);
+                    acc.username = oldName; // mantem o estado antigo se a migracao falhar
+                }
+            }
+
             // MULTIPLAYER OFFLINE: migra contas locais antigas que foram salvas com o
             // UUID nulo. Sem isso, quem ja tinha perfis offline continuaria com todos
             // os jogadores compartilhando a mesma identidade no servidor.

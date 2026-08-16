@@ -856,12 +856,20 @@ public final class Tools {
         // Entrar direto num servidor ao abrir o jogo, quando o perfil define um.
         // --quickPlayMultiplayer so existe no Minecraft 1.20+; em versoes anteriores
         // passar a flag faria o jogo recusar os argumentos, entao ela e omitida.
-        MinecraftProfile launchProfile = LauncherProfiles.getCurrentProfile();
-        if (launchProfile != null
-                && launchProfile.quickPlayServer != null
-                && !launchProfile.quickPlayServer.trim().isEmpty()
-                && supportsQuickPlay(versionInfo)) {
-            mcArguments += " --quickPlayMultiplayer " + launchProfile.quickPlayServer.trim();
+        //
+        // getCurrentProfile() LANCA RuntimeException se o perfil selecionado sumiu
+        // (perfil apagado, launcher_profiles.json corrompido). Esta e uma
+        // funcionalidade opcional: uma falha aqui nao pode impedir o jogo de abrir.
+        try {
+            MinecraftProfile launchProfile = LauncherProfiles.getCurrentProfile();
+            String quickPlayServer = launchProfile.quickPlayServer;
+            if (quickPlayServer != null
+                    && !quickPlayServer.trim().isEmpty()
+                    && supportsQuickPlay(versionInfo)) {
+                mcArguments += " --quickPlayMultiplayer " + quickPlayServer.trim();
+            }
+        } catch (RuntimeException e) {
+            Log.w(APP_NAME, "Could not read the quick play server, skipping it", e);
         }
 
         return JSONUtils.insertJSONValueList(splitAndFilterEmpty(mcArguments), varArgMap);
