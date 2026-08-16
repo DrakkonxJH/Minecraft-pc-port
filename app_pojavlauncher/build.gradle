@@ -4,54 +4,64 @@ plugins {
 
 static def getDate() { return new Date().format('yyyyMMdd') }
 
+/**
+ * Versao semantica do MineDrakk. Unica fonte da verdade: mude aqui ao lancar.
+ * O versionCode e derivado dela, entao nao ha dois numeros para manter em sincronia.
+ */
+ext.minedrakkVersion = "0.1.0"
+
+/**
+ * versionCode inteiro e crescente, exigido pelo Android e pela Play Store.
+ * Formato: MAJOR * 1_000_000 + MINOR * 10_000 + PATCH * 100 + build do dia.
+ * Ex.: 0.1.0 -> 10000 | 1.2.3 -> 1020300
+ */
+def getVersionCode = {
+    def (major, minor, patch) = minedrakkVersion.tokenize('.').collect { it.toInteger() }
+    return major * 1_000_000 + minor * 10_000 + patch * 100
+}
+
+/**
+ * Nome de versao legivel: <semver>[-<n> commits][-<hash>][-dirty][-debug]
+ * Ex.: 0.1.0-debug            (na tag exata, build de debug)
+ *      0.1.0-14-a1b2c3d-debug (14 commits apos a tag)
+ *      0.1.0-a1b2c3d-dirty    (sem tag, com alteracoes nao commitadas)
+ */
 def getVersionName = {
-    // Get the last version tag, as well as the short head of the last commit
-    String TAG = ""
-    String semVer = "1.1.7"
-    // Used by the fallback for github actions
-    String TAG_PART_COMMIT = ""
-    String TAG_STRING
+    String semVer = minedrakkVersion
+    String describe = ""
 
     try {
-        TAG = providers.exec {
-            commandLine 'git', 'describe', '--tags'
+        describe = providers.exec {
+            // So considera tags no formato v<semver>, ignorando tags de build
+            commandLine 'git', 'describe', '--tags', '--match', 'v[0-9]*', '--dirty'
             ignoreExitValue = true
-        }.getStandardOutput().asText.get()
-    } catch (Exception e) {
-        e.printStackTrace()
+        }.standardOutput.asText.get().trim()
+    } catch (Exception ignored) { }
+
+    if (!describe.isEmpty()) {
+        // v0.1.0-14-ga1b2c3d-dirty -> 0.1.0-14-a1b2c3d-dirty
+        String parsed = describe.replaceFirst(/^v/, '').replaceFirst(/-g/, '-')
+        return isDebugBuild() ? parsed + "-debug" : parsed
     }
 
-    // Fallback for action builds
-    if (TAG.toString().trim().isEmpty()) {
-        try {
-            TAG_PART_COMMIT = providers.exec {
-                commandLine 'git', 'describe', '--always', '--tags'
-                ignoreExitValue = true
-            }.getStandardOutput().asText.get()
-        } catch (Exception ignored) {
-        }
+    // Sem tag de versao ainda: usa o hash curto do commit
+    String hash = ""
+    try {
+        hash = providers.exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            ignoreExitValue = true
+        }.standardOutput.asText.get().trim()
+    } catch (Exception ignored) { }
+
+    if (hash.isEmpty()) {
+        // Fora de um repositorio git (ex.: tarball do codigo-fonte)
+        return semVer + "-" + getDate() + (isDebugBuild() ? "-debug" : "")
     }
+    return semVer + "-" + hash + (isDebugBuild() ? "-debug" : "")
+}
 
-
-    if(!TAG.isBlank()){
-        TAG_STRING = TAG
-    }else {
-        if(TAG_PART_COMMIT.isBlank()){
-             //Fallback no repo
-            return ("LOCAL-" + "${getDate()}")
-        }else {
-            // Used by github actions
-            TAG_STRING =  'amethyst-legacy-' + "${getDate()}" + "-" + TAG_PART_COMMIT.toString().trim()
-        }
-
-    }
-
-    def isRelease = project.gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
-    if(!isRelease){
-        return TAG_STRING.trim().replace("-g", "-") + "-" + "debug-" + semVer
-    }else {
-        return TAG_STRING.trim().replace("-g", "-") + "-" + "release-" + semVer
-    }
+static def isDebugBuild() {
+    return !gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
 }
 
 def getCFApiKey = {
@@ -157,7 +167,7 @@ android {
         minSdkVersion 21
         // AUDITORIA B2: Google Play exige API 36 para novos apps e updates desde 31/08/2026.
         targetSdkVersion 36
-        versionCode 10000000
+        versionCode getVersionCode()
         versionName getVersionName()
         multiDexEnabled true //important
         resValue 'string', 'curseforge_api_key', getCFApiKey()

@@ -236,6 +236,53 @@ find . -name '*.apk' -path '*outputs*'
 
 ---
 
+## Versionamento
+
+A versão é definida em **um único lugar**, `app_pojavlauncher/build.gradle`:
+
+```groovy
+ext.minedrakkVersion = "0.1.0"
+```
+
+Dela derivam automaticamente:
+
+* **`versionName`** — texto visível ao usuário, enriquecido com o estado do Git:
+
+  | Situação | Resultado |
+  |---|---|
+  | Na tag exata, debug | `0.1.0-debug` |
+  | Na tag exata, release | `0.1.0` |
+  | 14 commits após a tag | `0.1.0-14-a1b2c3d-debug` |
+  | Com alterações locais | `0.1.0-2-abc1234-dirty-debug` |
+  | Sem tag ainda | `0.1.0-27468f1-debug` |
+
+* **`versionCode`** — inteiro crescente exigido pelo Android:
+  `MAJOR × 1.000.000 + MINOR × 10.000 + PATCH × 100`
+  (`0.1.0` → `10000`, `1.2.3` → `1020300`)
+
+### Lançar uma nova versão
+
+```bash
+# 1. Atualiza a versão no build.gradle
+bash scripts/publish_apk.sh 0.2.0
+
+# 2. Recompila com a versão nova
+./gradlew :app_pojavlauncher:assembleDebug
+
+# 3. Publica: cria a tag v0.2.0 e a GitHub Release com o APK
+bash scripts/publish_apk.sh
+```
+
+Sem argumento, o script usa a versão que já está no `build.gradle`.
+Ele avisa se houver alterações não commitadas, para a release não divergir
+do código publicado.
+
+> **Convenção semântica:** `PATCH` para correções, `MINOR` para funcionalidades
+> novas compatíveis, `MAJOR` para mudanças que quebram compatibilidade
+> (ex.: formato de perfis ou de configuração).
+
+---
+
 ## O APK não fica no repositório — e por quê
 
 O `.apk` **não é versionado no Git**, por dois motivos:
