@@ -136,6 +136,10 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
         if(value[1].isEmpty()){ // Test mode
             MinecraftAccount account = new MinecraftAccount();
             account.username = value[0];
+            // MULTIPLAYER OFFLINE: usa o mesmo UUID que um servidor offline-mode
+            // calcularia para este nick. Sem isso toda conta local ficava com o UUID
+            // nulo e os jogadores compartilhavam a mesma identidade no servidor.
+            account.profileId = MinecraftAccount.generateOfflineUUID(value[0]);
             try {
                 account.save();
             }catch (IOException e){

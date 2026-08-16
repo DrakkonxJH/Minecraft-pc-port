@@ -49,6 +49,39 @@ public class MinecraftAccount {
         return accessToken.equals("0") && !username.startsWith("Demo.");
     }
 
+    /**
+     * Compute the UUID that an offline-mode server assigns to a given player name.
+     * <p>
+     * MULTIPLAYER OFFLINE: servidores com {@code online-mode=false} derivam o UUID do
+     * jogador de {@code md5("OfflinePlayer:" + nome)} (UUID versao 3). Contas locais do
+     * launcher usavam sempre o UUID nulo
+     * ({@code 00000000-0000-0000-0000-000000000000}), o que fazia TODOS os jogadores
+     * offline compartilharem a mesma identidade: inventarios, posicao e permissoes se
+     * misturavam ao entrar num servidor com amigos.
+     * <p>
+     * Gerando o mesmo UUID que o servidor calcularia, cada jogador passa a ter
+     * identidade propria e os dados persistem corretamente entre sessoes.
+     *
+     * @param username the player name
+     * @return the offline-mode UUID for that name
+     */
+    public static String generateOfflineUUID(String username) {
+        try {
+            byte[] hash = java.security.MessageDigest.getInstance("MD5")
+                    .digest(("OfflinePlayer:" + username).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            hash[6] = (byte) ((hash[6] & 0x0f) | 0x30); // version 3
+            hash[8] = (byte) ((hash[8] & 0x3f) | 0x80); // IETF variant
+            long msb = 0, lsb = 0;
+            for (int i = 0; i < 8; i++) msb = (msb << 8) | (hash[i] & 0xff);
+            for (int i = 8; i < 16; i++) lsb = (lsb << 8) | (hash[i] & 0xff);
+            return new java.util.UUID(msb, lsb).toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            // MD5 e obrigatorio em toda JVM; se faltar, mantem o comportamento antigo.
+            Log.e("MinecraftAccount", "MD5 unavailable, falling back to the null UUID", e);
+            return "00000000-0000-0000-0000-000000000000";
+        }
+    }
+
     public boolean isDemo(){
         return username.startsWith("Demo.");
     }
@@ -82,6 +115,19 @@ public class MinecraftAccount {
             }
             if (acc.profileId == null) {
                 acc.profileId = "00000000-0000-0000-0000-000000000000";
+            }
+            // MULTIPLAYER OFFLINE: migra contas locais antigas que foram salvas com o
+            // UUID nulo. Sem isso, quem ja tinha perfis offline continuaria com todos
+            // os jogadores compartilhando a mesma identidade no servidor.
+            if (acc.username != null
+                    && acc.isLocal()
+                    && "00000000-0000-0000-0000-000000000000".equals(acc.profileId)) {
+                acc.profileId = generateOfflineUUID(acc.username);
+                try {
+                    acc.save();
+                } catch (IOException e) {
+                    Log.w("MinecraftAccount", "Could not persist the migrated offline UUID", e);
+                }
             }
             if (acc.username == null) {
                 acc.username = "0";
