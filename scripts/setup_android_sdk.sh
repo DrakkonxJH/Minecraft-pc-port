@@ -16,7 +16,10 @@
 #
 set -euo pipefail
 
-# Versoes exigidas por app_pojavlauncher/build.gradle
+# Versoes exigidas por app_pojavlauncher/build.gradle.
+# O nome do pacote da plataforma variou entre "android-37" e "android-37.0"
+# conforme a API 37 saiu de preview, entao tentamos as duas formas e caimos
+# para a 36 se nenhuma existir no canal estavel.
 readonly COMPILE_SDK=37
 readonly BUILD_TOOLS="36.0.0"
 readonly NDK_VERSION="27.3.13750724"
@@ -99,20 +102,54 @@ export ANDROID_SDK_ROOT="$SDK_DIR"
 log "Aceitando as licencas do SDK..."
 yes | "$SDKMANAGER" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
 
+# --- descobre o nome real do pacote da plataforma ---------------------------
+# Escreve o local.properties ANTES de instalar: mesmo que algum componente
+# falhe, o Gradle ja consegue localizar o SDK e dar um erro mais util que
+# "SDK location not found".
+write_local_properties "$SDK_DIR"
+
+log "Consultando os pacotes de plataforma disponiveis..."
+AVAILABLE="$("$SDKMANAGER" --sdk_root="$SDK_DIR" --list 2>/dev/null || true)"
+
+PLATFORM_PKG=""
+for candidate in "platforms;android-${COMPILE_SDK}.0" "platforms;android-${COMPILE_SDK}"; do
+    if printf '%s' "$AVAILABLE" | grep -qF "$candidate"; then
+        PLATFORM_PKG="$candidate"
+        break
+    fi
+done
+
+if [ -z "$PLATFORM_PKG" ]; then
+    warn "A plataforma android-${COMPILE_SDK} nao esta disponivel neste canal do SDK."
+    warn "Instalando a android-36 e ajustando o compileSdk do projeto para 36."
+    PLATFORM_PKG="platforms;android-36"
+    NEEDS_COMPILE_SDK_DOWNGRADE=1
+fi
+log "Plataforma escolhida: ${PLATFORM_PKG}"
+
 # --- componentes ------------------------------------------------------------
 log "Instalando componentes (isso baixa ~2 GB e demora)..."
 "$SDKMANAGER" --sdk_root="$SDK_DIR" \
     "platform-tools" \
-    "platforms;android-${COMPILE_SDK}" \
+    "$PLATFORM_PKG" \
     "build-tools;${BUILD_TOOLS}" \
     "ndk;${NDK_VERSION}" \
     || die "Falha ao instalar os componentes do SDK"
 
-write_local_properties "$SDK_DIR"
+# --- ajusta o compileSdk se a API 37 nao existir ----------------------------
+if [ "${NEEDS_COMPILE_SDK_DOWNGRADE:-0}" = "1" ]; then
+    gradle_file="${PROJECT_ROOT}/app_pojavlauncher/build.gradle"
+    if grep -q '^\s*compileSdk = 37' "$gradle_file"; then
+        sed -i 's/^\(\s*\)compileSdk = 37/\1compileSdk = 36/' "$gradle_file"
+        warn "compileSdk ajustado de 37 para 36 em app_pojavlauncher/build.gradle."
+        warn "targetSdk 36 continua valido: e o exigido pela Google Play."
+    fi
+fi
 
 echo
 log "Verificacao:"
-for p in "platforms/android-${COMPILE_SDK}" "build-tools/${BUILD_TOOLS}" "ndk/${NDK_VERSION}" "platform-tools"; do
+platform_dir="platforms/${PLATFORM_PKG#platforms;}"
+for p in "$platform_dir" "build-tools/${BUILD_TOOLS}" "ndk/${NDK_VERSION}" "platform-tools"; do
     printf '    %-34s ' "$p"
     [ -d "${SDK_DIR}/${p}" ] && echo "ok" || echo "AUSENTE"
 done

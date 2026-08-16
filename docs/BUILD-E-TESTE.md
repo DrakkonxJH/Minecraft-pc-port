@@ -98,6 +98,14 @@ API 37, Build-Tools 36.0.0 e NDK 27.3.13750724
 > O `local.properties` guarda o caminho do SDK e é ignorado pelo Git de
 > propósito: ele muda de máquina para máquina.
 
+> **Sobre a API 37:** o pacote mudou de nome (`android-37` → `android-37.0`)
+> quando a API 37 saiu de preview, e pode não estar no canal estável.
+> O script detecta o nome correto automaticamente e, se a 37 não existir,
+> instala a **android-36** e ajusta o `compileSdk` do projeto para 36.
+> Isso **não afeta** o `targetSdk 36`, que é o exigido pela Google Play —
+> nenhuma das AARs do projeto precisa de `compileSdk` acima de 36
+> (verificado: todas declaram `minCompileSdk=1`).
+
 ### Submódulos
 
 O projeto declara 4 submódulos no `.gitmodules`, mas **apenas um está de fato
