@@ -69,12 +69,34 @@ Necessário para depurar de verdade (logcat, breakpoints, iteração rápida).
 ### Requisitos
 
 * **~10 GB** de disco livre e 8 GB de RAM
-* **JDK 21** ([Temurin](https://adoptium.net/))
-* **Android Studio** ([download](https://developer.android.com/studio)) — traz SDK e NDK
-* No Android Studio, em **SDK Manager**:
-  * SDK Platform **API 37**
-  * **NDK 27.3.13750724** (aba *SDK Tools* > marcar *Show Package Details*)
-  * Build-Tools mais recente
+* **JDK 21** ([Temurin](https://adoptium.net/)) — ou JDK 17
+* Android SDK com **API 37**, **Build-Tools 36.0.0** e **NDK 27.3.13750724**
+
+### Instalando o Android SDK
+
+**Não precisa do Android Studio.** Use o script pronto:
+
+```bash
+bash scripts/setup_android_sdk.sh
+```
+
+Ele baixa as command-line tools oficiais do Google, aceita as licenças, instala
+exatamente os componentes que o build exige e escreve o `local.properties`.
+São ~2 GB de download.
+
+Se você **já tem o Android Studio**, aponte para o SDK existente:
+
+```bash
+bash scripts/setup_android_sdk.sh --link-only
+```
+
+Nesse caso, confirme no **SDK Manager** que estão instalados:
+API 37, Build-Tools 36.0.0 e NDK 27.3.13750724
+(aba *SDK Tools* → marcar *Show Package Details* para ver as versões exatas).
+
+> **Erro `SDK location not found`?** É exatamente isso que o script resolve.
+> O `local.properties` guarda o caminho do SDK e é ignorado pelo Git de
+> propósito: ele muda de máquina para máquina.
 
 ### Submódulos
 
@@ -102,21 +124,22 @@ Sintoma de submódulo faltando:
 ### Passos
 
 ```bash
-# 1. Clonar COM submódulos (MobileGlues, SDL, sdl2-compat, MioLibPatcher)
+# 1. Clonar com submódulos
 git clone --recursive https://github.com/DrakkonxJH/Minecraft-pc-port.git
 cd Minecraft-pc-port
 git checkout arena/01a00b26-minecraft-pc-port
+git submodule update --init --recursive   # se esqueceu o --recursive
 
-# Se esqueceu o --recursive:
-git submodule update --init --recursive
+# 2. Android SDK + NDK (ou --link-only se já tem o Studio)
+bash scripts/setup_android_sdk.sh
 
-# 2. Baixar os runtimes Java (resolve o bloqueio B1)
+# 3. Runtimes Java (resolve o bloqueio B1)
 bash scripts/fetch_jre.sh 8 17 21
 
-# 3. Gerar a lista de idiomas (obrigatório, senão faltam traduções)
+# 4. Lista de idiomas (obrigatório, senão faltam traduções)
 bash scripts/languagelist_updater.sh
 
-# 4. Compilar
+# 5. Compilar
 ./gradlew :app_pojavlauncher:assembleDebug
 ```
 
@@ -169,10 +192,8 @@ O app também grava logs internamente em
 **"App não instalado"** — normalmente é conflito de assinatura com uma versão
 anterior. Desinstale a antiga primeiro.
 
-**Build falha com "SDK location not found"** — crie `local.properties` na raiz:
-```properties
-sdk.dir=/caminho/para/Android/Sdk
-```
+**Build falha com "SDK location not found"** — rode `bash scripts/setup_android_sdk.sh`
+(ou `--link-only` se já tem o SDK). Ele gera o `local.properties` com o caminho correto.
 
 **Build falha no NDK** — confirme a versão exata `27.3.13750724`. Outras versões
 podem quebrar o alinhamento de 16 KB.
