@@ -28,13 +28,29 @@
                 android:layout_height="0dp"
                 android:orientation="vertical"
                 app:layout_constraintGuide_percent="0.5"/>
+            <!-- Identidade MineDrakk -->
+            <ImageView
+                android:id="@+id/brand_wordmark"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/_30sdp"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:layout_marginBottom="@dimen/_4sdp"
+                android:layout_marginHorizontal="@dimen/_60sdp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_minedrakk_wordmark"
+                android:contentDescription="@string/app_name"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
             <com.kdt.mcgui.LauncherMenuButton
                 android:id="@+id/news_button"
                 style="@style/LauncherMenuButton.Universal"
                 android:layout_width="0dp"
                 android:drawableStart="@drawable/ic_menu_news"
                 android:text="@string/mcl_tab_wiki"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/brand_wordmark"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/social_divider"/>
             <View
@@ -51,7 +67,7 @@
                 android:layout_width="0dp"
                 android:drawableStart="@drawable/ic_discord"
                 android:text="@string/mcl_button_discord"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/brand_wordmark"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/social_divider"/>
 

@@ -1,23 +1,26 @@
-%s (Minecraft Java Launcher for Android), version %s by Tran Khanh Duy (based on "Boardwalk" app)<br>
-
+%s (Minecraft: Java Edition launcher for Android), version %s<br>
+<br>
+* Built on the work of:<br>
+ &bull; <a href="https://github.com/zhuowei/Boardwalk">Boardwalk</a> by Zhuowei Zhang &mdash; the original JVM launcher.<br>
+ &bull; <a href="https://github.com/PojavLauncherTeam/PojavLauncher">PojavLauncher</a> by Tran Khanh Duy and contributors &mdash; the base of this launcher.<br>
+ &bull; <a href="https://github.com/AngelAuraMC/Amethyst-Android">Amethyst</a> by AngelAuraMC &mdash; modern toolchain, SDL integration and renderers.<br>
+<br>
 * License:<br>
- • This application is licensed under <a href="https://github.com/PojavLauncherTeam/PojavLauncher/blob/master/LICENSE">GNU GPLv3</a>.<br>
- 
-* Credits / Third party components and their licenses:<br>
- • Apache Commons Compress (unknown or Apache License 2.0).<br>
- • exp4j: <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>.<br>
- • GL4ES: <a href="https://github.com/ptitSeb/gl4es/blob/master/LICENSE">MIT License</a>.<br>
- • LegacyLauncher: (unknown license).<br>
- • OpenJDK: <a href="https://openjdk.java.net/legal/gplv2+ce.html">GNU GPLv2 License</a>.<br>
- • LWJGL: <a href="http://legacy.lwjgl.org/license.php.html">LWJGL 2's License</a>.<br><br>
- • xHook: <a href="https://github.com/iqiyi/xHook/blob/master/LICENSE">Mixed licenses</a>.<br>
- • <a href="https://github.com/PojavLauncherTeam/PojavLauncher#credits--third-party-components-and-their-licenses">More (check at GitHub)</a>.
- • <a href="https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/v3_openjdk/GPLAY_PRIVACY_POLICY">Privacy policy</a>.
- • Thanks to <a href="https://mc-heads.net">MCHeads</a> for providing Minecraft avatars.
- 
+ &bull; This application is licensed under <a href="https://github.com/DrakkonxJH/Minecraft-pc-port/blob/main/LICENSE">GNU LGPLv3</a>, the same license as the projects above.<br>
+<br>
+* Third party components and their licenses:<br>
+ &bull; OpenJDK: <a href="https://openjdk.java.net/legal/gplv2+ce.html">GNU GPLv2 with Classpath Exception</a>.<br>
+ &bull; LWJGL: <a href="https://www.lwjgl.org/license">BSD-3 License</a>.<br>
+ &bull; GL4ES: <a href="https://github.com/ptitSeb/gl4es/blob/master/LICENSE">MIT License</a>.<br>
+ &bull; Mesa 3D: <a href="https://docs.mesa3d.org/license.html">MIT License</a>.<br>
+ &bull; SDL: <a href="https://github.com/libsdl-org/SDL/blob/main/LICENSE.txt">Zlib License</a>.<br>
+ &bull; MobileGlues: <a href="https://github.com/MobileGL-Dev/MobileGlues">MobileGL-Dev</a>.<br>
+ &bull; Apache Commons Compress: <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>.<br>
+ &bull; exp4j: <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>.<br>
+ &bull; bhook: <a href="https://github.com/bytedance/bhook/blob/main/LICENSE">MIT License</a>.<br>
+ &bull; Thanks to <a href="https://mc-heads.net">MCHeads</a> for providing Minecraft avatars.<br>
+<br>
 * Notes:<br>
  - This app is under development and might not be stable.<br>
- - This app is not affiliated with Minecraft, Mojang or Microsoft.<br><br>
- 
-* Translators can be found at <a href="https://crowdin.com/project/pojavlauncher">Crowdin</a>
- 
+ - This app is not affiliated with Minecraft, Mojang or Microsoft.<br>
+ - You need a legitimate copy of Minecraft: Java Edition to play.<br><br>

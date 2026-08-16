@@ -1,15 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+        Identidade visual do MineDrakk: fundo grafite esverdeado com destaque
+        em verde esmeralda. Substitui a paleta roxo-ametista herdada do Amethyst.
+    -->
+
+    <!-- Cor da marca -->
+    <color name="brand_primary">#2ECC71</color>       <!-- esmeralda principal -->
+    <color name="brand_primary_dark">#10B981</color>  <!-- esmeralda profundo -->
+    <color name="brand_primary_light">#6EE7A8</color> <!-- esmeralda claro (hover/foco) -->
+    <color name="brand_accent">#34D399</color>        <!-- realce -->
+
+    <!-- Superficies -->
+    <color name="background_app">#12161A</color>
+    <color name="background_status_bar">#0D1114</color>
+    <color name="background_bottom_bar">#161B20</color>
+    <color name="background_overlay">#232A31</color>
+    <color name="background_card">#1B2127</color>
+    <color name="divider">@color/background_overlay</color>
+
+    <!-- Texto -->
+    <color name="primary_text">#F2F5F3</color>
+    <color name="secondary_text">#9AA6A0</color>
+    <color name="tertiary_text">#6B7770</color>
+
+    <!-- Estados -->
+    <color name="state_error">#EF4444</color>
+    <color name="state_warning">#F59E0B</color>
+    <color name="state_success">@color/brand_primary</color>
+
+    <!-- Compatibilidade: nome usado pelo codigo legado (barra de login, etc.) -->
+    <color name="minebutton_color">@color/brand_primary</color>
+
+    <!-- Controles do jogo (sobrepostos a superficie 3D) -->
     <color name="control_button_color">#4CC4C4C4</color>
     <color name="control_button_pressed_color">#4D000000</color>
-
-    <color name="minebutton_color">#9649b8</color>
-    <color name="background_app">#181818</color>
-    <color name="divider">@color/background_overlay</color>
-    <color name="background_overlay">#464646</color>
-    <color name="background_status_bar">#242424</color>
-    <color name="background_bottom_bar">#232323</color>
-
-    <color name="primary_text">#FFFFFF</color>
-    <color name="secondary_text">#B2B2B2</color>
 </resources>
