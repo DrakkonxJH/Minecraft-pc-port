@@ -197,6 +197,45 @@ o Gradle escolhe o certo para cada módulo.
 
 ---
 
+## Onde está o APK depois de compilar
+
+O Gradle **não avisa** onde salvou o arquivo. Ele fica em:
+
+```
+app_pojavlauncher/build/outputs/apk/debug/app_pojavlauncher-debug.apk
+```
+
+Repare que o nome do arquivo é **`app_pojavlauncher-debug.apk`** (o nome do
+módulo Gradle), e não "MineDrakk" — o nome do app só aparece depois de instalado.
+
+### Jeito mais fácil
+
+```bash
+bash scripts/get_apk.sh
+```
+
+O script procura todos os APKs do projeto, lista o que achou com tamanho e data,
+e copia o de debug para **`MineDrakk.apk`** na raiz do projeto.
+
+### Se disser que não encontrou
+
+Quer dizer que o build ainda não gerou o arquivo. Compile:
+
+```bash
+./gradlew :app_pojavlauncher:assembleDebug
+```
+
+> ⚠️ Se você rodou `git pull` depois do último build, **precisa recompilar** —
+> o APK antigo não tem as correções novas.
+
+### Achar manualmente
+
+```bash
+find . -name '*.apk' -path '*outputs*'
+```
+
+---
+
 ## ✅ Estado do build
 
 O build foi validado de ponta a ponta em 16/08/2026 (Ubuntu, Gradle 9.6.1,
