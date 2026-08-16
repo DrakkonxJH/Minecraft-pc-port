@@ -76,6 +76,33 @@ Necessário para depurar de verdade (logcat, breakpoints, iteração rápida).
   * **NDK 27.3.13750724** (aba *SDK Tools* > marcar *Show Package Details*)
   * Build-Tools mais recente
 
+### ⚠️ Antes de tudo: submódulos
+
+O projeto usa **4 submódulos** e o build **falha sem eles**:
+
+| Submódulo | Para quê |
+|---|---|
+| `MioLibPatcher` | incluído em `settings.gradle` como projeto Gradle |
+| `app_pojavlauncher/src/main/jni/SDL` | `sdl_hook.c` faz parte do build nativo |
+| `app_pojavlauncher/src/main/jni/sdl2-compat` | camada de compatibilidade SDL2 |
+| `MobileGlues` | renderizador MobileGlues |
+
+Se você clonou **sem** `--recursive` (ou o clone falhou no meio), rode:
+
+```bash
+git submodule update --init --recursive
+```
+
+Confira se ficaram populados (nenhum pode estar vazio):
+
+```bash
+git submodule status
+ls MioLibPatcher MobileGlues app_pojavlauncher/src/main/jni/SDL
+```
+
+Sintoma típico de submódulo faltando:
+`Project with path ':MioLibPatcher' could not be found`.
+
 ### Passos
 
 ```bash
