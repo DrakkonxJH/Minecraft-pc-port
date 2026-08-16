@@ -26,6 +26,9 @@ public class SelectAuthFragment extends Fragment {
         Button mLocalButton = view.findViewById(R.id.button_local_authentication);
 
         mMicrosoftButton.setOnClickListener(v -> Tools.swapFragment(requireActivity(), MicrosoftLoginFragment.class, MicrosoftLoginFragment.TAG, null));
-        mLocalButton.setOnClickListener(v -> hasNoOnlineProfileDialog(requireActivity(), () -> Tools.swapFragment(requireActivity(), LocalLoginFragment.class, LocalLoginFragment.TAG, null)));
+        // MODO OFFLINE: usa hasVerifiedOwnership() para que o login local siga
+        // disponivel depois do primeiro login Microsoft, inclusive sem internet.
+        mLocalButton.setOnClickListener(v -> hasNoOnlineProfileDialog(requireActivity(),
+                () -> Tools.swapFragment(requireActivity(), LocalLoginFragment.class, LocalLoginFragment.TAG, null)));
     }
 }

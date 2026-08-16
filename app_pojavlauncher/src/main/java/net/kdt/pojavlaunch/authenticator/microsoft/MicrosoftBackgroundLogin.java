@@ -107,6 +107,13 @@ public class MicrosoftBackgroundLogin {
                 acc.updateSkinFace();
                 acc.save();
 
+                // MODO OFFLINE: registra que a posse do Minecraft Java foi comprovada
+                // neste dispositivo. A partir daqui o usuario pode criar perfis locais
+                // e jogar offline sem precisar reconectar na Microsoft.
+                if (doesOwnGame) {
+                    Tools.markOwnershipVerified();
+                }
+
                 if(doneListener != null) {
                     MinecraftAccount finalAcc = acc;
                     Tools.runOnUiThread(() -> doneListener.onLoginDone(finalAcc));
