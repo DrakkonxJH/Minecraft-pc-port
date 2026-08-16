@@ -171,64 +171,62 @@ projeto a longo prazo. Ver `AUDITORIA.md` seção 3.2.
 
 ---
 
-## ⚠️ CI falhou com `startup_failure`? Leia isto
+## ⚠️ CI não roda? Conta travada por billing
 
-Se o build terminar em **`startup_failure` em ~0s, sem nenhum job criado e sem
-logs**, o problema **não é o workflow** — ele nem chegou a ser lido.
+**Diagnóstico concluído em 16/08/2026.** Mensagem exata devolvida pelo GitHub:
 
-Diagnóstico que fiz no repositório:
+> `The job was not started because your account is locked due to a billing issue.`
+
+### O que já foi descartado
 
 | Verificação | Resultado |
 |---|---|
-| YAML do workflow | ✅ válido, sem tabs, sem BOM, sem CRLF |
-| Arquivo chegou ao GitHub | ✅ sim, os 90 bytes/linhas conferem |
-| Runner `ubuntu-22.04` | ✅ ainda ativo (não foi aposentado) |
-| Demais `.yml` do `.github/` | ✅ todos válidos |
-| **Workflows registrados pela API** | ❌ **lista vazia** |
-| **Jobs criados** | ❌ **zero** |
-| Visibilidade do repositório | 🔒 **privado** |
+| YAML do workflow | ✅ válido — sem tabs, sem BOM, sem CRLF |
+| Arquivo no GitHub | ✅ presente e íntegro |
+| Runner `ubuntu-22.04` | ✅ ativo |
+| Workflow registrado | ✅ sim (após tornar público) |
+| Job criado e iniciado | ❌ **bloqueado pelo billing** |
 
-A lista de workflows vazia com o arquivo presente aponta para um bloqueio de
-**conta/billing**, não de código. Em repositórios **privados**, o GitHub Actions
-consome cota (2.000 min/mês no plano Free) e **exige método de pagamento válido**.
-Quando há pendência de pagamento, os runs são criados e morrem em
-`startup_failure` sem log — exatamente o sintoma. Há um caso idêntico reportado
-em [community/discussions/201113](https://github.com/orgs/community/discussions/201113)
-(repo privado, conta Free, `startup_failure`, zero jobs, problema de método de pagamento).
+O problema **não é o código nem o workflow**. Tornar o repositório público
+**não resolve**: a trava é na **conta**, e afeta Actions em qualquer
+repositório — público ou privado.
 
-### Solução A — Tornar o repositório público ⭐ (recomendada)
+### Solução: destravar a conta
 
-Actions é **gratuito e ilimitado** em repositórios públicos. Resolve na hora e
-não custa nada.
+1. Acesse **https://github.com/settings/billing**
+2. Procure o aviso de conta bloqueada / pagamento pendente
+3. Atualize ou adicione um **método de pagamento válido**
+   * Mesmo no plano Free isso pode ser exigido se houve cobrança falha,
+     assinatura pendente (Copilot, Pro) ou uso de Actions acima da cota em
+     repositório privado
+4. Se não houver aviso visível, abra um chamado em
+   **https://support.github.com** citando a mensagem exata acima
 
-**Settings → General → Danger Zone → Change repository visibility → Public**
-
-Antes de fazer isso, confirme que está tudo certo:
-
-* ✅ Nenhuma keystore de release versionada (já removemos as duas)
-* ✅ Nenhuma senha ou token no código (auditamos)
-* ⚠️ O `debug.keystore` fica público — é normal, é a chave de debug padrão do Android
-* ⚠️ Se você tiver um `curseforge_key.txt` local, ele está no `.gitignore` — confira
-
-### Solução B — Verificar billing (mantendo privado)
-
-1. **Settings da conta → Billing and plans → Payment information**
-   — resolva qualquer pendência de método de pagamento
-2. **Billing and plans → Plans and usage** — confira os minutos de Actions
-3. **Settings do repositório → Actions → General** — confirme
-   *"Allow all actions and reusable workflows"*
-
-### Solução C — Compilar localmente
-
-Não depende de CI nenhuma. Ver a **Opção B** no topo deste documento.
-
-### Como confirmar que voltou a funcionar
-
-Depois de aplicar A ou B, force um novo run:
+Depois de destravar, force um novo build:
 
 ```bash
 git commit --allow-empty -m "Testa CI"
 git push
 ```
 
-Em **Actions** deve aparecer um run **em execução** (não `startup_failure` instantâneo).
+### Enquanto isso: compile localmente
+
+**Esta é a via que não depende de ninguém** — veja a *Opção B* no topo deste
+documento. Com o `scripts/fetch_jre.sh` já pronto, são 4 comandos:
+
+```bash
+bash scripts/fetch_jre.sh 8 17 21
+bash scripts/languagelist_updater.sh
+./gradlew :app_pojavlauncher:assembleDebug
+```
+
+### Alternativa: espelhar o repositório
+
+Se a conta demorar a destravar, você pode criar um repositório em **outra conta
+GitHub** (ou GitLab CI, que tem plano gratuito próprio) e usá-lo só para gerar
+os APKs:
+
+```bash
+git remote add espelho https://github.com/OUTRA_CONTA/MineDrakk.git
+git push espelho arena/01a00b26-minecraft-pc-port
+```
