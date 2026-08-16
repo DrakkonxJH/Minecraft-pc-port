@@ -349,3 +349,48 @@ Uma via intermediária razoável: manter este fork como base e **portar seletiva
 ---
 
 *Auditoria estática. Não inclui análise dinâmica, profiling, teste em dispositivo, nem revisão do código gerado (`GLCapabilities.java`, `AWTInputEvent.java`) e das dependências binárias (`.so`, `.jar`).*
+
+---
+
+## Adendo — 16 de agosto de 2026: bloqueio B1 resolvido
+
+Reavaliei o bloqueio B1 (§3.1) consultando a API do GitHub, e a situação é
+**melhor do que a previsão original**:
+
+* Os artefatos de Actions do `AngelAuraMC/angelauramc-openjdk-build` **não estão
+  expirados** (`jre8-pojav`, 24 MB, de 12/07/2026, entre outros).
+* Mais importante: o repositório publica **releases permanentes**, que não
+  expiram nunca:
+
+| Tag | Conteúdo |
+|---|---|
+| `download_jre8`  | `jre8-android-{arm,arm64,x86,x86_64}.tar.xz` |
+| `download_jre17` | `jre17-android-{arm,arm64,x86,x86_64}.tar.xz` |
+| `download_jre21` | `jre21-android-{arm,arm64,x86,x86_64}.tar.xz` |
+| `download_jre25` | `jre25-android-{arm,arm64,x86_64}.tar.xz` |
+| `download`       | todas as versões acima juntas |
+
+**Correção aplicada:** criado o `scripts/fetch_jre.sh`, que baixa das *releases*
+em vez de artefatos de Actions. Isso elimina a dependência de artefatos com
+prazo de validade, que era o risco real apontado em B1.
+
+**Risco residual:** ainda dependemos de uma organização de terceiros. Se o
+`AngelAuraMC` sumir, o build quebra. A mitigação definitiva é espelhar os
+tarballs em uma release própria deste repositório — o `fetch_jre.sh` só precisa
+ter a constante `REPO` trocada para isso.
+
+### Estado dos bloqueios
+
+| # | Bloqueio | Estado |
+|---|---|---|
+| B1 | JREs indisponíveis | ✅ **Resolvido** (`scripts/fetch_jre.sh`) |
+| B2 | `targetSdk 34` < API 36 exigida pela Play Store | ⬜ Pendente |
+| B3 | Keystore de release versionada | ✅ **Resolvido** (keystore.properties / env) |
+
+### Nota sobre validação
+
+As correções das seções 4 e 5 foram verificadas por testes de lógica
+(`.verify/`), incluindo AddressSanitizer para o vazamento JNI. **Não houve
+compilação nem execução em dispositivo** — o ambiente de desenvolvimento não
+tem JDK, Android SDK/NDK, nem permissão para instalá-los. A validação em
+hardware real depende do build descrito em `docs/BUILD-E-TESTE.md`.

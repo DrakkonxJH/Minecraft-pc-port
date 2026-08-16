@@ -40,6 +40,7 @@ Todos corrigidos aqui. Veja o histórico de commits para o detalhe de cada um.
 * [x] Correções de estabilidade da auditoria aplicadas
 * [x] Assinatura de release desacoplada do repositório
 * [ ] `targetSdk 36` (obrigatório para a Google Play desde 31/08/2026)
+* [x] Runtimes Java via releases permanentes (bloqueio B1 resolvido)
 * [ ] Testes automatizados
 * [ ] Criptografia do armazenamento de contas
 * [ ] Client ID próprio da Microsoft
@@ -69,18 +70,24 @@ Todos corrigidos aqui. Veja o histórico de commits para o detalhe de cada um.
 git clone --recursive https://github.com/DrakkonxJH/Minecraft-pc-port.git
 cd Minecraft-pc-port
 
-# 2. Gerar a lista de idiomas (obrigatório antes do build)
+# 2. Baixar os runtimes Java (JRE 8/17/21)
+bash scripts/fetch_jre.sh
+
+# 3. Gerar a lista de idiomas (obrigatório antes do build)
 bash scripts/languagelist_updater.sh      # Windows: scripts\languagelist_updater.bat
 
-# 3. Compilar
+# 4. Compilar
 ./gradlew :app_pojavlauncher:assembleDebug
 ```
 
+> **Não quer instalar nada?** Ative o GitHub Actions e baixe o APK pronto.
+> Passo a passo em **[`docs/BUILD-E-TESTE.md`](docs/BUILD-E-TESTE.md)**.
+
 O APK sai em `app_pojavlauncher/build/outputs/apk/debug/`.
 
-> **Runtime Java:** o build precisa dos JREs portados em
-> `app_pojavlauncher/src/main/assets/components/jre{,-new,-21}`. Eles não são versionados
-> (ver `.gitignore`). Obtenha-os pela CI de build do OpenJDK multiarch ou hospede os seus.
+> **Runtime Java:** o `scripts/fetch_jre.sh` baixa os JREs das *releases* do
+> `angelauramc-openjdk-build`, que são permanentes (o workflow original usava
+> artefatos de Actions, que expiram em 90 dias — ver bloqueio B1 da auditoria).
 > Sem eles o APK compila, mas o app não inicia o jogo.
 
 ### Assinatura de release

@@ -1,128 +1,90 @@
+# ---------------------------------------------------------------------------
+# MineDrakk Java - CI de build do APK
+#
+# ESTE ARQUIVO E UM TEMPLATE. Para ativar:
+#     mkdir -p .github/workflows
+#     cp docs/ci-android.yml.template .github/workflows/android.yml
+#     git add .github/workflows/android.yml && git commit && git push
+#
+# (O agente que montou o fork nao tem a permissao "workflows" no GitHub App,
+#  por isso o arquivo nao pode ser criado automaticamente.)
+#
+# Depois de ativado, cada push gera um APK em Actions > run > Artifacts.
+# Baixe "MineDrakk-debug-apk", descompacte e instale no celular.
+# ---------------------------------------------------------------------------
 name: Android CI
 
 on:
-  pull_request:
-    branches-ignore:
-      - 'l10n_v3_openjdk' 
-    types: [ opened, reopened ]
   push:
     branches-ignore:
       - 'l10n_v3_openjdk'
+  pull_request:
+    types: [ opened, reopened, synchronize ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     env:
-      GPLAY_KEYSTORE_PASSWORD: ${{ secrets.GPLAY_KEYSTORE_PASSWORD }}
       CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
+          fetch-depth: 0   # necessario para o versionName derivado do git
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Get JRE 8
-        uses: dawidd6/action-download-artifact@v9
-        with:
-          workflow: build.yml
-          path: app_pojavlauncher/src/main/assets/components/jre
-          workflow_conclusion: completed
-          repo: AngelAuraMC/angelauramc-openjdk-build  # TODO: migrar para CI propria (AUDITORIA B1)
-          branch: buildjre8
-          name: jre8-pojav
+      # AUDITORIA B1: os JREs vem das *releases* do angelauramc-openjdk-build,
+      # que sao permanentes, e nao de artefatos de Actions, que expiram em 90 dias.
+      - name: Fetch Java runtimes
+        run: bash scripts/fetch_jre.sh 8 17 21
 
-      # - name: Get JRE17
-      #   uses: dawidd6/action-download-artifact@v9
-      #   with:
-      #     workflow: build.yml
-      #     path: app_pojavlauncher/src/main/assets/components/jre-new
-      #     workflow_conclusion: completed
-      #     repo: AngelAuraMC/angelauramc-openjdk-build  # TODO: migrar para CI propria (AUDITORIA B1)
-      #     branch: buildjre17-21
-      #     name: jre17-pojav
-      #
-      # - name: Get JRE21
-      #   uses: dawidd6/action-download-artifact@v9
-      #   with:
-      #     workflow: build.yml
-      #     path: app_pojavlauncher/src/main/assets/components/jre-21
-      #     workflow_conclusion: completed
-      #     repo: AngelAuraMC/angelauramc-openjdk-build  # TODO: migrar para CI propria (AUDITORIA B1)
-      #     branch: buildjre17-21
-      #     name: jre21-pojav
-      #
-      # - name: Get JRE25
-      #   uses: dawidd6/action-download-artifact@v9
-      #   with:
-      #     workflow: build.yml
-      #     path: app_pojavlauncher/src/main/assets/components/jre-25
-      #     workflow_conclusion: completed
-      #     repo: FCL-Team/Android-OpenJDK-Build
-      #     branch: Build_JRE_25
-      #     name: jre25-multiarch
+      - name: Generate language list
+        run: bash scripts/languagelist_updater.sh
 
       - uses: gradle/actions/setup-gradle@v4
         with:
           validate-wrappers: false
           gradle-version: "9.6.1"
 
-      - name: Run scripts
-        run: |
-          ./scripts/languagelist_updater.sh
-          mkdir out
+      - name: Build debug APK
+        run: gradle :app_pojavlauncher:assembleDebug --stacktrace
 
-      - name: Build Release .apk
+      - name: Collect outputs
         run: |
-          # Build the launcher
-          gradle :app_pojavlauncher:assembleRelease
-          mv app_pojavlauncher/build/outputs/apk/release/app_pojavlauncher-release.apk out/app-release.apk
+          mkdir -p out
+          cp app_pojavlauncher/build/outputs/apk/debug/*.apk out/MineDrakk-debug.apk
+          (cd out && sha256sum MineDrakk-debug.apk > MineDrakk-debug.apk.sha256)
+          ls -lh out
 
-      - name: Gen md5sums
-        run: |
-          md5sum out/app-release.apk > out/app-release.md5
-
-      - name: Build Debug .apk
-        run: |
-          # Build the launcher
-          gradle :app_pojavlauncher:assembleDebug
-          mv app_pojavlauncher/build/outputs/apk/debug/app_pojavlauncher-debug.apk out/app-debug.apk
-
-      - name: Gen md5sums
-        run: |
-          md5sum out/app-debug.apk > out/app-debug.md5
-
+      # Este e o artefato que voce baixa para instalar no celular.
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug (recommended)
-          path: out/app-debug.*
+          name: MineDrakk-debug-apk
+          path: out/MineDrakk-debug.*
+          retention-days: 30
 
-      - name: Upload release APK
+      # APK sem os runtimes embutidos: bem menor, util para iterar rapido.
+      # O app pede para instalar um runtime na primeira execucao.
+      - name: Build APK without runtimes
+        run: |
+          rm -rf app_pojavlauncher/src/main/assets/components/jre \
+                 app_pojavlauncher/src/main/assets/components/jre-new \
+                 app_pojavlauncher/src/main/assets/components/jre-21
+          gradle :app_pojavlauncher:assembleDebug
+          cp app_pojavlauncher/build/outputs/apk/debug/*.apk out/MineDrakk-debug-noruntime.apk
+
+      - name: Upload no-runtime APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: out/app-release.*
-
-# ---------------------------------------------------------------------------
-# NOTA (MineDrakk Java)
-#
-# Este arquivo esta em docs/ como TEMPLATE, e nao em .github/workflows/.
-# Motivo: o agente que montou o fork nao possui a permissao "workflows" no
-# GitHub, entao nao pode criar/atualizar Actions automaticamente.
-#
-# Para ativar a CI, copie manualmente:
-#     mkdir -p .github/workflows
-#     cp docs/ci-android.yml.template .github/workflows/android.yml
-#
-# ANTES de ativar, resolva a pendencia B1 da AUDITORIA.md: o passo "Get JRE 8"
-# aponta para AngelAuraMC/angelauramc-openjdk-build, uma CI de terceiros.
-# Artefatos de GitHub Actions expiram (90 dias por padrao). Hospede os JREs
-# em uma release propria e troque o passo por um download direto.
-# ---------------------------------------------------------------------------
+          name: MineDrakk-debug-apk-noruntime
+          path: out/MineDrakk-debug-noruntime.apk
+          retention-days: 30
