@@ -121,24 +121,33 @@ public class MinecraftAccount {
             // O prefixo "Demo." faz isDemo() retornar true, o que adiciona a flag
             // --demo (jogo limitado a ~100 minutos, mundo fixo) e desvia o diretorio
             // do jogo para /demo/.minecraft. Como agora criamos contas offline
-            // completas nesse cenario, contas antigas ficariam presas no modo demo
-            // para sempre. Renomeia removendo o prefixo e apaga o arquivo antigo.
+            // completas nesse cenario, contas antigas ficariam presas no modo demo.
+            //
+            // A conta e gravada com o nome novo, mas o arquivo antigo NAO e apagado:
+            // a conta ativa e referenciada por NOME em SharedPreferences e em varias
+            // listas da UI. Remover o arquivo aqui deixaria essas referencias orfaos
+            // e o launcher nao encontraria mais a conta selecionada. O arquivo antigo
+            // fica como resquicio inofensivo e pode ser removido pelo usuario.
             if (acc.username != null && acc.username.startsWith("Demo.")) {
-                String oldName = acc.username;
-                String newName = oldName.substring("Demo.".length());
+                String newName = acc.username.substring("Demo.".length());
                 if (newName.isEmpty()) newName = "Player";
+
+                // A remocao do prefixo e SEMPRE aplicada ao objeto devolvido: e ela
+                // que impede isDemo() de ativar a flag --demo. Gravar em disco e
+                // apenas uma otimizacao, e nao pode alterar este resultado -- do
+                // contrario a conta oscilaria entre migrada e nao migrada a cada
+                // leitura, dependendo de o arquivo novo ja existir.
                 acc.username = newName;
                 acc.profileId = generateOfflineUUID(newName);
-                try {
-                    acc.save();
-                    File oldFile = new File(Tools.DIR_ACCOUNT_NEW + "/" + oldName + ".json");
-                    if (oldFile.exists() && !oldFile.delete()) {
-                        Log.w("MinecraftAccount", "Could not delete the old demo account file");
+
+                if (!accountExists(newName)) {
+                    try {
+                        acc.save();
+                        Log.i("MinecraftAccount", "Migrated demo account to offline: " + newName);
+                    } catch (IOException e) {
+                        // A conta segue utilizavel nesta sessao mesmo sem gravar.
+                        Log.w("MinecraftAccount", "Could not persist the migrated demo account", e);
                     }
-                    Log.i("MinecraftAccount", "Migrated demo account to offline: " + newName);
-                } catch (IOException e) {
-                    Log.w("MinecraftAccount", "Could not persist the migrated demo account", e);
-                    acc.username = oldName; // mantem o estado antigo se a migracao falhar
                 }
             }
 
