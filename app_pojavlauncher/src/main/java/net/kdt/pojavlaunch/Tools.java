@@ -53,6 +53,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -973,9 +975,8 @@ public final class Tools {
         boolean multiWindowMode = SDK_INT >= 24 && activity.isInMultiWindowMode();
         boolean wantFullscreen = fullscreen && !multiWindowMode;
 
-        // Sob edge-to-edge o conteudo desenha atras das barras do sistema; fora dele,
-        // deixamos o sistema aplicar os insets normalmente.
-        WindowCompat.setDecorFitsSystemWindows(window, !wantFullscreen);
+        // Sob edge-to-edge o conteudo desenha atras das barras do sistema.
+        WindowCompat.setDecorFitsSystemWindows(window, false);
 
         WindowInsetsControllerCompat controller =
                 WindowCompat.getInsetsController(window, decorView);
@@ -989,6 +990,44 @@ public final class Tools {
         } else {
             controller.show(WindowInsetsCompat.Type.systemBars());
         }
+
+        applyContentInsets(activity, wantFullscreen);
+    }
+
+    /**
+     * Apply system bar insets as padding on the activity content view.
+     * <p>
+     * AUDITORIA B2: a partir da API 35 o edge-to-edge e imposto pela plataforma e
+     * {@code setDecorFitsSystemWindows(true)} deixa de ter efeito. Sem compensar os
+     * insets manualmente, telas nao-fullscreen (o launcher) desenhariam por baixo da
+     * status bar e da barra de navegacao, escondendo botoes e texto.
+     * <p>
+     * Em telas fullscreen (o jogo) o padding e zerado de proposito: a superficie do
+     * Minecraft deve ocupar a tela inteira.
+     *
+     * @param activity the activity whose content view should be padded
+     * @param fullscreen whether the activity is running fullscreen
+     */
+    private static void applyContentInsets(Activity activity, boolean fullscreen) {
+        final View content = activity.findViewById(android.R.id.content);
+        if (content == null) return;
+
+        if (fullscreen) {
+            ViewCompat.setOnApplyWindowInsetsListener(content, null);
+            content.setPadding(0, 0, 0, 0);
+            return;
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(content, (view, windowInsets) -> {
+            // displayCutout entra junto para cobrir notch em landscape, onde o
+            // recorte fica numa das laterais.
+            Insets bars = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout());
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
+        ViewCompat.requestApplyInsets(content);
     }
 
     public static DisplayMetrics currentDisplayMetrics;
