@@ -19,6 +19,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -145,7 +146,8 @@ public class LauncherActivity extends BaseActivity {
 
     /* Listener for the back button in settings */
     private final ExtraListener<String> mBackPreferenceListener = (key, value) -> {
-        if(value.equals("true")) onBackPressed();
+        // AUDITORIA 6 / B2: aciona o dispatcher em vez do onBackPressed() deprecado.
+        if(value.equals("true")) getOnBackPressedDispatcher().onBackPressed();
         return false;
     };
 
@@ -333,6 +335,7 @@ public class LauncherActivity extends BaseActivity {
 
         mSettingsButton.setOnClickListener(mSettingButtonListener);
         ProgressKeeper.addTaskCountListener(mProgressLayout);
+        getOnBackPressedDispatcher().addCallback(this, mBackCallback);
         ExtraCore.addExtraListener(ExtraConstants.BACK_PREFERENCE, mBackPreferenceListener);
         ExtraCore.addExtraListener(ExtraConstants.SELECT_AUTH_METHOD, mSelectAuthMethod);
 
@@ -382,24 +385,36 @@ public class LauncherActivity extends BaseActivity {
         getSupportFragmentManager().unregisterFragmentLifecycleCallbacks(mFragmentCallbackListener);
     }
 
-    /** Custom implementation to feel more natural when a backstack isn't present */
-    @Override
-    public void onBackPressed() {
-        MicrosoftLoginFragment fragment = (MicrosoftLoginFragment) getVisibleFragment(MicrosoftLoginFragment.TAG);
-        if(fragment != null){
-            if(fragment.canGoBack()){
+    /**
+     * Custom implementation to feel more natural when a backstack isn't present.
+     * AUDITORIA 6 / B2: migrado de onBackPressed() para OnBackPressedDispatcher. Com
+     * targetSdk 35+ o predictive back e padrao e onBackPressed() nao e mais chamado,
+     * o que quebraria a navegacao do login Microsoft e a saida na tela raiz.
+     */
+    private final OnBackPressedCallback mBackCallback = new OnBackPressedCallback(true) {
+        @Override
+        public void handleOnBackPressed() {
+            MicrosoftLoginFragment fragment =
+                    (MicrosoftLoginFragment) getVisibleFragment(MicrosoftLoginFragment.TAG);
+            if(fragment != null && fragment.canGoBack()){
                 fragment.goBack();
                 return;
             }
-        }
 
-        // Check if we are at the root then
-        if(getVisibleFragment("ROOT") != null){
-            finish();
-        }
+            // Check if we are at the root then
+            if(getVisibleFragment("ROOT") != null){
+                finish();
+                return;
+            }
 
-        super.onBackPressed();
-    }
+            // Delegate to the fragment backstack, mirroring the old super call.
+            if(getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                getSupportFragmentManager().popBackStack();
+            } else {
+                finish();
+            }
+        }
+    };
 
     @Override
     public void onAttachedToWindow() {

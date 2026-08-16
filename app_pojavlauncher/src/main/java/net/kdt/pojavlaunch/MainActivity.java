@@ -727,10 +727,10 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         super.onTrimMemory(level);
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-    }
+    // AUDITORIA 6 / B2: o override de onBackPressed() era um repasse puro para super,
+    // sem comportamento proprio. Removido: com targetSdk 35+ o predictive back esta
+    // ativo por padrao e onBackPressed() deixa de ser invocado, entao manter o override
+    // so criaria a ilusao de que ele faz algo.
 
     @Override
     public void updateInputAreaRect(@Nullable RectF rect) {

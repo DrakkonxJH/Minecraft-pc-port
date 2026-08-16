@@ -394,3 +394,63 @@ As correções das seções 4 e 5 foram verificadas por testes de lógica
 compilação nem execução em dispositivo** — o ambiente de desenvolvimento não
 tem JDK, Android SDK/NDK, nem permissão para instalá-los. A validação em
 hardware real depende do build descrito em `docs/BUILD-E-TESTE.md`.
+
+---
+
+## Adendo 2 — 16 de agosto de 2026: migração para `targetSdk 36` (B2)
+
+Aplicada a migração de `targetSdk 34` → `36`, exigida pela Google Play desde
+31/08/2026. O `compileSdk` já estava em 37 (herdado do Amethyst).
+
+### Mudanças
+
+| Item | Antes | Depois |
+|---|---|---|
+| `targetSdkVersion` | 34 | **36** |
+| `androidx.core` | comentado (transitivo) | `1.13.1` explícito |
+| `Tools.setFullscreen()` | `setSystemUiVisibility()` + `SYSTEM_UI_FLAG_*` | `WindowInsetsControllerCompat` |
+| `JavaGUILauncherActivity.onResume()` | `SYSTEM_UI_FLAG_HIDE_NAVIGATION` | `controller.hide(navigationBars())` |
+| `LauncherActivity.onBackPressed()` | override | `OnBackPressedCallback` |
+| `CustomControlsActivity.onBackPressed()` | override | `OnBackPressedCallback` |
+| `MainActivity.onBackPressed()` | override vazio | removido |
+| `GamepadMapperFragment` / `MicrosoftLoginFragment` | `activity.onBackPressed()` | `getOnBackPressedDispatcher().onBackPressed()` |
+
+### Por que o back precisou mudar junto
+
+Com `targetSdk 35+` o **predictive back** passa a ser o padrão e
+`Activity.onBackPressed()` **deixa de ser chamado**. Sem essa migração:
+
+* o editor de controles fecharia **sem perguntar** sobre alterações não salvas;
+* o botão voltar no login Microsoft não navegaria dentro do WebView;
+* o botão "voltar" da tela de configurações pararia de funcionar.
+
+Ou seja: subir o `targetSdk` sem migrar o back quebraria funcionalidades.
+
+### Sobre o `SDLActivity.java`
+
+O `org/libsdl/app/SDLActivity.java` também usa `setSystemUiVisibility()` e
+`onBackPressed()`, mas **não foi alterado de propósito**: é código upstream do
+SDL, sincronizado via submódulo. Corrigir ali criaria divergência permanente com
+o upstream. A correção correta é acompanhar o SDL ou enviar patch para eles.
+
+### ⚠️ Risco residual — precisa de validação em dispositivo
+
+Estas mudanças **não puderam ser compiladas nem executadas** (o ambiente não tem
+JDK/SDK/NDK). Elas afetam diretamente a aparência e a navegação, então são as
+que mais merecem atenção no primeiro teste real:
+
+1. **Tela cheia no jogo** — a superfície pode aparecer sob as barras do sistema
+   se `setDecorFitsSystemWindows` conflitar com o que a `MainActivity` já fazia.
+2. **Botão voltar** em: editor de controles, login Microsoft, configurações.
+3. **Insets em modo multi-janela** e em aparelhos com notch.
+4. **16 KB page size** (§3.2) — continua sem validação em hardware.
+
+Roteiro de teste em `docs/BUILD-E-TESTE.md`.
+
+### Estado final dos bloqueios
+
+| # | Bloqueio | Estado |
+|---|---|---|
+| B1 | JREs indisponíveis | ✅ Resolvido (`scripts/fetch_jre.sh`) |
+| B2 | `targetSdk` abaixo do exigido | ✅ Resolvido (36) — **pendente de validação em dispositivo** |
+| B3 | Keystore de release versionada | ✅ Resolvido |

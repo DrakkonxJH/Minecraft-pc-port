@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import net.kdt.pojavlaunch.customcontrols.ControlData;
@@ -30,6 +31,8 @@ public class CustomControlsActivity extends BaseActivity implements EditorExitab
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_custom_controls);
+
+		getOnBackPressedDispatcher().addCallback(this, mBackCallback);
 
 		mControlLayout = findViewById(R.id.customctrl_controllayout);
 		mDrawerLayout = findViewById(R.id.customctrl_drawerlayout);
@@ -76,13 +79,21 @@ public class CustomControlsActivity extends BaseActivity implements EditorExitab
 		}
 	}
 
-	@Override
-	public void onBackPressed() {
-		mControlLayout.askToExit(this);
-	}
+	// AUDITORIA 6 / B2: migrado de onBackPressed() para OnBackPressedDispatcher.
+	// Com targetSdk 35+ o predictive back e padrao e onBackPressed() nao e mais
+	// chamado, o que faria o editor fechar sem perguntar se ha alteracoes pendentes.
+	private final OnBackPressedCallback mBackCallback = new OnBackPressedCallback(true) {
+		@Override
+		public void handleOnBackPressed() {
+			mControlLayout.askToExit(CustomControlsActivity.this);
+		}
+	};
 
 	@Override
 	public void exitEditor() {
-		super.onBackPressed();
+		// Desabilita o callback para que o proximo "voltar" siga o fluxo padrao
+		// e efetivamente encerre a activity.
+		mBackCallback.setEnabled(false);
+		getOnBackPressedDispatcher().onBackPressed();
 	}
 }

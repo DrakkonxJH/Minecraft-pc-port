@@ -39,7 +39,7 @@ Todos corrigidos aqui. Veja o histórico de commits para o detalhe de cada um.
 * [x] Correções de segurança da auditoria aplicadas
 * [x] Correções de estabilidade da auditoria aplicadas
 * [x] Assinatura de release desacoplada do repositório
-* [ ] `targetSdk 36` (obrigatório para a Google Play desde 31/08/2026)
+* [x] `targetSdk 36` + edge-to-edge e predictive back (⚠️ requer validação em dispositivo)
 * [x] Runtimes Java via releases permanentes (bloqueio B1 resolvido)
 * [ ] Testes automatizados
 * [ ] Criptografia do armazenamento de contas

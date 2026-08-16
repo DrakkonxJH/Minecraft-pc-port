@@ -18,6 +18,9 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.kdt.LoggerView;
 
@@ -264,9 +267,13 @@ public class JavaGUILauncherActivity extends BaseActivity implements View.OnTouc
     @Override
     public void onResume() {
         super.onResume();
-        final int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        final View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(uiOptions);
+        // AUDITORIA 6 / B2: setSystemUiVisibility() e ignorado a partir da API 35.
+        // WindowInsetsControllerCompat funciona desde a API 21 e segue valido na 36.
+        WindowInsetsControllerCompat controller =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.hide(WindowInsetsCompat.Type.navigationBars());
+        controller.setSystemBarsBehavior(
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
     }
 
 

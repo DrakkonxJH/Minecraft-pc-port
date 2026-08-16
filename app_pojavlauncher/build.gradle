@@ -155,7 +155,8 @@ android {
     defaultConfig {
         applicationId "com.drakkonx.minedrakk"
         minSdkVersion 21
-        targetSdkVersion 34
+        // AUDITORIA B2: Google Play exige API 36 para novos apps e updates desde 31/08/2026.
+        targetSdkVersion 36
         versionCode 10000000
         versionName getVersionName()
         multiDexEnabled true //important
@@ -271,7 +272,8 @@ dependencies {
     implementation 'commons-codec:commons-codec:1.15'
     // implementation 'com.wu-man:android-bsf-api:3.1.3'
     implementation 'androidx.preference:preference:1.2.0'
-    //implementation 'androidx.core:core:1.7.0'
+    // AUDITORIA B2: necessario para WindowInsetsControllerCompat (edge-to-edge, API 35+).
+    implementation 'androidx.core:core:1.13.1'
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
     implementation 'androidx.viewpager2:viewpager2:1.1.0-beta01'
     implementation 'androidx.annotation:annotation:1.5.0'

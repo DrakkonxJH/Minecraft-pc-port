@@ -44,9 +44,12 @@ public class GamepadMapperFragment extends Fragment implements
             .remapDpad(true);
     private final Handler mExitHandler = new Handler(Looper.getMainLooper());
     private final Runnable mExitRunnable = () -> {
-        Activity activity = getActivity();
+        // AUDITORIA 6 / B2: dispatcher em vez do onBackPressed() deprecado.
+        // Precisa ser ComponentActivity (nao android.app.Activity) para expor o dispatcher.
+        androidx.activity.ComponentActivity activity =
+                (androidx.activity.ComponentActivity) getActivity();
         if(activity == null) return;
-        activity.onBackPressed();
+        activity.getOnBackPressedDispatcher().onBackPressed();
     };
     private RemapperManager mInputManager;
     private GamepadMapperAdapter mMapperAdapter;

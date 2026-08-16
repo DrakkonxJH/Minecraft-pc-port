@@ -40,6 +40,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -52,6 +53,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -958,27 +962,33 @@ public final class Tools {
     }
 
     public static void setFullscreen(Activity activity, boolean fullscreen) {
-        final View decorView = activity.getWindow().getDecorView();
-        View.OnSystemUiVisibilityChangeListener visibilityChangeListener = visibility -> {
-            boolean multiWindowMode = SDK_INT >= 24 && activity.isInMultiWindowMode();
-            // When in multi-window mode, asking for fullscreen makes no sense (cause the launcher runs in a window)
-            // So, ignore the fullscreen setting when activity is in multi window mode
-            if(fullscreen && !multiWindowMode){
-                if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                    decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-                }
-            }else{
-                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-            }
+        // AUDITORIA 6 / B2: setSystemUiVisibility() e as flags SYSTEM_UI_FLAG_* estao
+        // deprecadas desde a API 30 e sao IGNORADAS a partir da API 35, onde o modo
+        // edge-to-edge passa a ser obrigatorio. Usamos WindowInsetsControllerCompat,
+        // que funciona desde a API 21 e continua valido na API 36.
+        final Window window = activity.getWindow();
+        final View decorView = window.getDecorView();
 
-        };
-        decorView.setOnSystemUiVisibilityChangeListener(visibilityChangeListener);
-        visibilityChangeListener.onSystemUiVisibilityChange(decorView.getSystemUiVisibility()); //call it once since the UI state may not change after the call, so the activity wont become fullscreen
+        // Em multi-window pedir tela cheia nao faz sentido: o launcher roda numa janela.
+        boolean multiWindowMode = SDK_INT >= 24 && activity.isInMultiWindowMode();
+        boolean wantFullscreen = fullscreen && !multiWindowMode;
+
+        // Sob edge-to-edge o conteudo desenha atras das barras do sistema; fora dele,
+        // deixamos o sistema aplicar os insets normalmente.
+        WindowCompat.setDecorFitsSystemWindows(window, !wantFullscreen);
+
+        WindowInsetsControllerCompat controller =
+                WindowCompat.getInsetsController(window, decorView);
+
+        if (wantFullscreen) {
+            controller.hide(WindowInsetsCompat.Type.systemBars());
+            // Equivalente moderno de SYSTEM_UI_FLAG_IMMERSIVE_STICKY: as barras
+            // reaparecem transitoriamente com um swipe e somem sozinhas depois.
+            controller.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        } else {
+            controller.show(WindowInsetsCompat.Type.systemBars());
+        }
     }
 
     public static DisplayMetrics currentDisplayMetrics;

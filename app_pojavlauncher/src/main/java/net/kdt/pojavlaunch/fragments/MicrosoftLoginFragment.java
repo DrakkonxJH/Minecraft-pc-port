@@ -113,7 +113,8 @@ public class MicrosoftLoginFragment extends Fragment {
 
             // Sometimes, the user just clicked cancel
             if(url.contains("res=cancel")){
-                requireActivity().onBackPressed();
+                // AUDITORIA 6 / B2: dispatcher em vez do onBackPressed() deprecado.
+                requireActivity().getOnBackPressedDispatcher().onBackPressed();
                 return true;
             }
 
