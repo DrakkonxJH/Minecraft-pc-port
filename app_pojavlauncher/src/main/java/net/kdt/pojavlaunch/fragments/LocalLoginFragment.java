@@ -32,12 +32,6 @@ public class LocalLoginFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        // MODO OFFLINE: antes usava hasOnlineProfile(), o que expulsava o usuario desta
-        // tela quando a conta Microsoft era removida ou estava offline, mesmo com a
-        // posse ja comprovada. hasVerifiedOwnership() cobre o caso offline.
-        if (!Tools.hasVerifiedOwnership()){
-            Tools.swapFragment(requireActivity(), MainMenuFragment.class, MainMenuFragment.TAG, null);
-        }
         mUsernameEditText = view.findViewById(R.id.login_edit_email);
         view.findViewById(R.id.login_button).setOnClickListener(v -> {
             if(!checkEditText()) {

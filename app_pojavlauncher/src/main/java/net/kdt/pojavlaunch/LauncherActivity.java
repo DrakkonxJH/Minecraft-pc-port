@@ -3,7 +3,6 @@ package net.kdt.pojavlaunch;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static net.kdt.pojavlaunch.Tools.getMods;
 import static net.kdt.pojavlaunch.Tools.hasMods;
-import static net.kdt.pojavlaunch.Tools.hasNoOnlineProfileDialog;
 import static net.kdt.pojavlaunch.Tools.isOnline;
 
 import android.Manifest;
@@ -238,21 +237,9 @@ public class LauncherActivity extends BaseActivity {
         String normalizedVersionId = AsyncMinecraftDownloader.normalizeVersionId(prof.lastVersionId);
         JMinecraftVersionList.Version mcVersion = AsyncMinecraftDownloader.getListedVersion(normalizedVersionId);
 
-        // Do not load when is a modded version or older than minecraft 1.3 on demo account
-        if (mAccountSpinner.getSelectedAccount().isDemo()) {
-            boolean isOlderThan13 = true;
-
-            if (mcVersion != null) {
-                try {
-                    isOlderThan13 = DateUtils.dateBefore(DateUtils.parseReleaseDate(mcVersion.releaseTime), 2012, 6, 22);
-                } catch (ParseException ignored) {}
-            }
-
-            if (isOlderThan13) {
-                hasNoOnlineProfileDialog(this, getString(R.string.global_error), getString(R.string.demo_versions_supported));
-                return false;
-            }
-        }
+        // A restricao que impedia contas demo de abrir versoes anteriores a 1.3.1 foi
+        // removida: era uma trava do launcher, nao da Mojang, e qualquer versao pode
+        // ser executada offline. Todas as versoes ficam disponiveis para todas as contas.
 
         new MinecraftDownloader().start(
                 this,

@@ -1,7 +1,5 @@
 package net.kdt.pojavlaunch.fragments;
 
-import static net.kdt.pojavlaunch.Tools.hasNoOnlineProfileDialog;
-
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -26,9 +24,8 @@ public class SelectAuthFragment extends Fragment {
         Button mLocalButton = view.findViewById(R.id.button_local_authentication);
 
         mMicrosoftButton.setOnClickListener(v -> Tools.swapFragment(requireActivity(), MicrosoftLoginFragment.class, MicrosoftLoginFragment.TAG, null));
-        // MODO OFFLINE: usa hasVerifiedOwnership() para que o login local siga
-        // disponivel depois do primeiro login Microsoft, inclusive sem internet.
-        mLocalButton.setOnClickListener(v -> hasNoOnlineProfileDialog(requireActivity(),
-                () -> Tools.swapFragment(requireActivity(), LocalLoginFragment.class, LocalLoginFragment.TAG, null)));
+        // Conta local disponivel sem qualquer pre-requisito.
+        mLocalButton.setOnClickListener(v ->
+                Tools.swapFragment(requireActivity(), LocalLoginFragment.class, LocalLoginFragment.TAG, null));
     }
 }

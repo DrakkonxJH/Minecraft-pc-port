@@ -462,7 +462,7 @@
     <string name="demo_unsupported">Demo Profile not supported</string>
     <string name="change_account">Please change accounts to use this function</string>
     <string name="no_minecraft_account_found">No Minecraft Account Found</string>
-    <string name="feature_requires_java_account">This launcher downloads Minecraft from Mojang\'s servers, so you need to sign in once with a Microsoft account that owns Minecraft: Java Edition.\n\nAfter that first sign-in you can create offline profiles and play without an internet connection \u2014 you won\'t need to sign in again.</string>
+    <string name="feature_requires_java_account">Sign in with a Microsoft account to play online and use your Minecraft skin.\n\nAll launcher features work without signing in \u2014 offline profiles can play any version, in singleplayer or on LAN and offline-mode servers.</string>
     <string name="delete_account_and_login">Delete account and log in</string>
     <string name="login_again">Please log in again</string>
     <string name="account_corrupted">Selected account is corrupted</string>

@@ -1939,28 +1939,34 @@ public final class Tools {
         return currentProfile == null || currentProfile.isLocal();
     }
     /**
-     * Chave que registra que uma conta Microsoft dona do Minecraft Java ja foi
-     * validada neste dispositivo em algum momento.
+     * Whether the user may use the launcher's full feature set.
      * <p>
-     * MODO OFFLINE: a verificacao de propriedade continua existindo (o launcher baixa
-     * os arquivos do jogo da Mojang, entao exigir a posse e obrigatorio), mas ela passa
-     * a ser feita UMA VEZ. Depois disso o usuario pode criar perfis locais e jogar
-     * offline indefinidamente, sem depender da API da Microsoft estar no ar.
+     * O MineDrakk nao restringe funcionalidades por tipo de conta. Contas locais
+     * (offline) sao um recurso padrao de launchers de terceiros e existiam no
+     * PojavLauncher, base deste projeto; a restricao foi introduzida depois, pelo
+     * Amethyst. Aqui ela e removida: criar perfis, instalar modpacks e jogar
+     * funcionam com conta Microsoft, demo ou local.
+     * <p>
+     * Isto <b>nao</b> contorna nenhuma protecao do jogo:
+     * <ul>
+     *   <li>os arquivos do Minecraft continuam sendo baixados dos servidores da
+     *       Mojang, que os servem publicamente;</li>
+     *   <li>servidores com {@code online-mode=true} continuam recusando contas
+     *       sem licenca, pois a validacao ocorre no servidor da Mojang.</li>
+     * </ul>
+     * Contas locais servem para jogar offline, em LAN e em servidores proprios.
+     *
+     * @return sempre true
      */
-    public static final String PREF_KEY_OWNERSHIP_VERIFIED = "ownership_verified";
-
-    /**
-     * Marca que a posse do jogo foi comprovada por um login Microsoft bem-sucedido.
-     * Chamado quando uma conta que possui o Minecraft Java e salva.
-     */
-    public static void markOwnershipVerified() {
-        LauncherPreferences.DEFAULT_PREF.edit()
-                .putBoolean(PREF_KEY_OWNERSHIP_VERIFIED, true)
-                .apply();
+    public static boolean hasVerifiedOwnership() {
+        return true;
     }
 
     /**
      * Whether a Microsoft account that owns Minecraft Java is currently stored.
+     * <p>
+     * Mantido porque descreve um fato util (ex.: para exibir avisos sobre
+     * servidores online), mas nao e mais usado para bloquear funcionalidades.
      * @return true if such an account exists right now
      */
     public static boolean hasOnlineProfile(){
@@ -1972,40 +1978,15 @@ public final class Tools {
         return false;
     }
 
-    /**
-     * Whether the user is entitled to the launcher's full feature set.
-     * <p>
-     * Diferente de {@link #hasOnlineProfile()}, este metodo tambem aceita o caso em que
-     * a posse ja foi comprovada anteriormente neste dispositivo. Isso permite:
-     * <ul>
-     *   <li>usar o launcher 100% offline depois do primeiro login;</li>
-     *   <li>criar varios perfis locais (nomes e mundos separados);</li>
-     *   <li>continuar jogando se a API da Microsoft estiver indisponivel;</li>
-     *   <li>remover a conta Microsoft do aparelho sem perder acesso ao que ja e seu.</li>
-     * </ul>
-     * @return true when the user may use the full feature set
-     */
-    public static boolean hasVerifiedOwnership() {
-        if (hasOnlineProfile()) {
-            // Uma conta valida esta presente: registra para os proximos usos offline.
-            markOwnershipVerified();
-            return true;
-        }
-        return LauncherPreferences.DEFAULT_PREF.getBoolean(PREF_KEY_OWNERSHIP_VERIFIED, false);
-    }
-
     public static void hasNoOnlineProfileDialog(Activity activity, @Nullable Runnable run, @Nullable String customTitle, @Nullable String customMessage){
-        // MODO OFFLINE: aceita tanto uma conta online presente quanto uma posse ja
-        // comprovada anteriormente. O bloqueio a perfis demo e mantido apenas quando
-        // o chamador forneceu uma mensagem propria para esse caso.
-        boolean entitled = hasVerifiedOwnership();
-        boolean demoBlocked = Tools.isDemoProfile(activity) && customMessage != null;
-
-        if (entitled && !demoBlocked){
-            if (run != null) {
-                run.run();
-            }
-        } else { // Sem direito de acesso: explica o que fazer
+        // Sem gate de conta: a acao sempre prossegue. As sobrecargas que passam
+        // customTitle/customMessage sao usadas apenas para avisos informativos,
+        // entao um dialogo so aparece quando nao ha acao a executar.
+        if (run != null) {
+            run.run();
+            return;
+        }
+        if (customTitle != null || customMessage != null) {
             customTitle = customTitle == null ? activity.getString(R.string.no_minecraft_account_found) : customTitle;
             customMessage = customMessage == null ? activity.getString(R.string.feature_requires_java_account) : customMessage;
             dialogOnUiThread(activity, customTitle, customMessage);
