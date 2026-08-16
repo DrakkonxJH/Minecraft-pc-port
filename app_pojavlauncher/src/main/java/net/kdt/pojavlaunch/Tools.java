@@ -853,7 +853,40 @@ public final class Tools {
 
         if(profile.isDemo()) mcArguments += " --demo";
 
+        // Entrar direto num servidor ao abrir o jogo, quando o perfil define um.
+        // --quickPlayMultiplayer so existe no Minecraft 1.20+; em versoes anteriores
+        // passar a flag faria o jogo recusar os argumentos, entao ela e omitida.
+        MinecraftProfile launchProfile = LauncherProfiles.getCurrentProfile();
+        if (launchProfile != null
+                && launchProfile.quickPlayServer != null
+                && !launchProfile.quickPlayServer.trim().isEmpty()
+                && supportsQuickPlay(versionInfo)) {
+            mcArguments += " --quickPlayMultiplayer " + launchProfile.quickPlayServer.trim();
+        }
+
         return JSONUtils.insertJSONValueList(splitAndFilterEmpty(mcArguments), varArgMap);
+    }
+
+    /**
+     * Whether the given version accepts the {@code --quickPlayMultiplayer} flag.
+     * <p>
+     * A flag foi introduzida no Minecraft 1.20 (7 de junho de 2023). A deteccao usa a
+     * data de lancamento em vez do numero da versao porque o id pode ser de snapshot
+     * ({@code 23w14a}) ou de modloader ({@code 1.20.1-forge-47.2.0}), formatos que nao
+     * sao comparaveis numericamente.
+     *
+     * @param versionInfo the version being launched
+     * @return true when quick play is supported
+     */
+    private static boolean supportsQuickPlay(JMinecraftVersionList.Version versionInfo) {
+        try {
+            Date releaseDate = DateUtils.getOriginalReleaseDate(versionInfo);
+            // Mes 5 = junho (Calendar usa meses base zero)
+            return releaseDate != null && !DateUtils.dateBefore(releaseDate, 2023, 5, 7);
+        } catch (ParseException e) {
+            Log.w(APP_NAME, "Could not determine the release date, skipping quick play", e);
+            return false;
+        }
     }
 
     public static String fromStringArray(String[] strArr) {

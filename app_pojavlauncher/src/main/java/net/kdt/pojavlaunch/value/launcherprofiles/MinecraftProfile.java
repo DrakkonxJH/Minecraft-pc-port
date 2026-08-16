@@ -23,6 +23,16 @@ public class MinecraftProfile {
 	public String controlFile;
 	public MinecraftResolution[] resolution;
 
+	/**
+	 * Endereco de servidor para entrar automaticamente ao abrir o jogo
+	 * (ex.: {@code meuservidor.com} ou {@code 192.168.0.10:25565}).
+	 * <p>
+	 * Usa a flag {@code --quickPlayMultiplayer}, disponivel apenas no
+	 * <b>Minecraft 1.20 e superior</b>. Em versoes anteriores o campo e ignorado
+	 * e o jogo abre no menu normalmente.
+	 */
+	public String quickPlayServer;
+
 
 	public static MinecraftProfile createTemplate(){
 		MinecraftProfile TEMPLATE = new MinecraftProfile();

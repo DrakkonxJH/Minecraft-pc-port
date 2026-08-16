@@ -99,6 +99,27 @@ R$ 20–40/mês para 2–4 GB de RAM, suficiente para 5–10 jogadores.
 
 ---
 
+## Entrar direto no servidor ao abrir o jogo
+
+O MineDrakk pode pular o menu e conectar automaticamente ao seu servidor.
+
+1. Toque no ícone de editar perfil (ao lado do seletor de versão)
+2. Preencha **"Join server on launch (1.20+)"** com o endereço
+   (ex.: `meuservidor.com` ou `192.168.0.10:25565`)
+3. Salve e toque em Jogar
+
+> Requer **Minecraft 1.20 ou superior** — a flag `--quickPlayMultiplayer` não
+> existe em versões anteriores. Em versões antigas o campo é ignorado e o jogo
+> abre no menu normalmente, sem erro.
+
+Deixe o campo vazio para voltar ao comportamento padrão.
+
+Para gerenciar **vários servidores**, use a lista do próprio Minecraft
+(Multijogador → Adicionar servidor) — ela já guarda quantos você quiser, com
+ping e ícone.
+
+---
+
 ## Nicks diferentes para cada jogador
 
 **Importante:** cada pessoa precisa de um nick **diferente**.

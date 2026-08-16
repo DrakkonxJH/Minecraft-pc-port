@@ -10,14 +10,34 @@ static def getDate() { return new Date().format('yyyyMMdd') }
  */
 ext.minedrakkVersion = "0.1.0"
 
+// Avaliado uma unica vez, no corpo do script (nao em metodo static: metodos
+// estaticos nao enxergam `gradle`, o que causava
+// "Apparent variable 'gradle' was found in a static scope").
+def isDebugBuild = !gradle.startParameter.taskNames.any {
+    it.toLowerCase().contains('release')
+}
+def debugSuffix = isDebugBuild ? "-debug" : ""
+
 /**
  * versionCode inteiro e crescente, exigido pelo Android e pela Play Store.
- * Formato: MAJOR * 1_000_000 + MINOR * 10_000 + PATCH * 100 + build do dia.
+ * Formato: MAJOR * 1_000_000 + MINOR * 10_000 + PATCH * 100
  * Ex.: 0.1.0 -> 10000 | 1.2.3 -> 1020300
  */
 def getVersionCode = {
-    def (major, minor, patch) = minedrakkVersion.tokenize('.').collect { it.toInteger() }
-    return major * 1_000_000 + minor * 10_000 + patch * 100
+    def parts = minedrakkVersion.tokenize('.').collect { it.toInteger() }
+    return parts[0] * 1000000 + parts[1] * 10000 + parts[2] * 100
+}
+
+/** Executa um comando git e devolve a saida, ou "" se falhar. */
+def gitOutput = { List<String> args ->
+    try {
+        return providers.exec {
+            commandLine(args)
+            ignoreExitValue = true
+        }.standardOutput.asText.get().trim()
+    } catch (Exception ignored) {
+        return ""
+    }
 }
 
 /**
@@ -27,41 +47,20 @@ def getVersionCode = {
  *      0.1.0-a1b2c3d-dirty    (sem tag, com alteracoes nao commitadas)
  */
 def getVersionName = {
-    String semVer = minedrakkVersion
-    String describe = ""
-
-    try {
-        describe = providers.exec {
-            // So considera tags no formato v<semver>, ignorando tags de build
-            commandLine 'git', 'describe', '--tags', '--match', 'v[0-9]*', '--dirty'
-            ignoreExitValue = true
-        }.standardOutput.asText.get().trim()
-    } catch (Exception ignored) { }
-
+    // Considera apenas tags v<semver>, para que tags de build nao interfiram
+    String describe = gitOutput(['git', 'describe', '--tags', '--match', 'v[0-9]*', '--dirty'])
     if (!describe.isEmpty()) {
         // v0.1.0-14-ga1b2c3d-dirty -> 0.1.0-14-a1b2c3d-dirty
-        String parsed = describe.replaceFirst(/^v/, '').replaceFirst(/-g/, '-')
-        return isDebugBuild() ? parsed + "-debug" : parsed
+        return describe.replaceFirst(/^v/, '').replaceFirst(/-g/, '-') + debugSuffix
     }
 
     // Sem tag de versao ainda: usa o hash curto do commit
-    String hash = ""
-    try {
-        hash = providers.exec {
-            commandLine 'git', 'rev-parse', '--short', 'HEAD'
-            ignoreExitValue = true
-        }.standardOutput.asText.get().trim()
-    } catch (Exception ignored) { }
-
+    String hash = gitOutput(['git', 'rev-parse', '--short', 'HEAD'])
     if (hash.isEmpty()) {
         // Fora de um repositorio git (ex.: tarball do codigo-fonte)
-        return semVer + "-" + getDate() + (isDebugBuild() ? "-debug" : "")
+        return minedrakkVersion + "-" + getDate() + debugSuffix
     }
-    return semVer + "-" + hash + (isDebugBuild() ? "-debug" : "")
-}
-
-static def isDebugBuild() {
-    return !gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+    return minedrakkVersion + "-" + hash + debugSuffix
 }
 
 def getCFApiKey = {

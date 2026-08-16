@@ -52,7 +52,7 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
     private String mValueToConsume = "";
     private Button mSaveButton, mDeleteButton, mControlSelectButton, mGameDirButton, mVersionSelectButton;
     private Spinner mDefaultRuntime, mDefaultRenderer;
-    private EditText mDefaultName, mDefaultJvmArgument;
+    private EditText mDefaultName, mDefaultJvmArgument, mQuickPlayServer;
     private TextView mDefaultPath, mDefaultVersion, mDefaultControl;
     private ImageView mProfileIcon;
     private final ActivityResultLauncher<?> mCropperLauncher = CropperUtils.registerCropper(this, this);
@@ -193,6 +193,7 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
 
         mDefaultVersion.setText(mTempProfile.lastVersionId);
         mDefaultJvmArgument.setText(mTempProfile.javaArgs == null ? "" : mTempProfile.javaArgs);
+        mQuickPlayServer.setText(mTempProfile.quickPlayServer == null ? "" : mTempProfile.quickPlayServer);
         mDefaultName.setText(mTempProfile.name);
         mDefaultPath.setText(mTempProfile.gameDir == null ? "" : mTempProfile.gameDir);
         mDefaultControl.setText(mTempProfile.controlFile == null ? "" : mTempProfile.controlFile);
@@ -231,6 +232,7 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         mDefaultPath = view.findViewById(R.id.vprof_editor_path);
         mDefaultName = view.findViewById(R.id.vprof_editor_profile_name);
         mDefaultJvmArgument = view.findViewById(R.id.vprof_editor_jre_args);
+        mQuickPlayServer = view.findViewById(R.id.vprof_editor_server);
 
         mSaveButton = view.findViewById(R.id.vprof_editor_save_button);
         mDeleteButton = view.findViewById(R.id.vprof_editor_delete_button);
@@ -249,10 +251,12 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
                 .replaceAll("[\r\n]+", " ")
                 .trim();
         mTempProfile.gameDir = mDefaultPath.getText().toString();
+        mTempProfile.quickPlayServer = mQuickPlayServer.getText().toString().trim();
 
         if(mTempProfile.controlFile.isEmpty()) mTempProfile.controlFile = null;
         if(mTempProfile.javaArgs.isEmpty()) mTempProfile.javaArgs = null;
         if(mTempProfile.gameDir.isEmpty()) mTempProfile.gameDir = null;
+        if(mTempProfile.quickPlayServer.isEmpty()) mTempProfile.quickPlayServer = null;
 
         Runtime selectedRuntime = (Runtime) mDefaultRuntime.getSelectedItem();
         mTempProfile.javaDir = (selectedRuntime.name.equals("<Default>") || selectedRuntime.versionString == null)

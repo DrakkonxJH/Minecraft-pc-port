@@ -162,6 +162,28 @@
                 app:layout_constraintTop_toBottomOf="@+id/vprof_editor_ctrl_spinner" />
 
             <TextView
+                android:id="@+id/vprof_editor_serverLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/pvc_quick_play_server"
+                app:layout_constraintBottom_toTopOf="@+id/vprof_editor_server"
+                app:layout_constraintStart_toStartOf="@+id/vprof_editor_server" />
+
+            <EditText
+                android:id="@+id/vprof_editor_server"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:background="@drawable/background_line"
+                android:ems="10"
+                android:hint="@string/pvc_quick_play_server_hint"
+                android:inputType="textUri"
+                android:paddingHorizontal="@dimen/padding_heavy"
+                android:textSize="@dimen/_13ssp"
+
+                app:layout_constraintTop_toBottomOf="@+id/vprof_editor_jre_args" />
+
+            <TextView
                 android:id="@+id/vprof_editor_beginPathView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -188,7 +210,7 @@
 
                 app:layout_constraintEnd_toStartOf="@id/vprof_editor_path_button"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/vprof_editor_jre_args" />
+                app:layout_constraintTop_toBottomOf="@+id/vprof_editor_server" />
 
             <Button
                 android:id="@+id/vprof_editor_path_button"

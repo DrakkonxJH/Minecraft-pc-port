@@ -523,4 +523,7 @@
     <string name="microsoft_no_license_message">This Microsoft account doesn\'t own Minecraft: Java Edition, so an offline profile will be created instead.\n\nYou can play any version in singleplayer, on LAN and on offline-mode servers. Online servers require a licensed account.</string>
     <string name="microsoft_no_license_found">This Microsoft account doesn\'t own Minecraft: Java Edition.</string>
     <string name="mcl_account_username">Nickname</string>
+    <!-- Entrar direto num servidor ao abrir o jogo (Minecraft 1.20+) -->
+    <string name="pvc_quick_play_server">Join server on launch (1.20+)</string>
+    <string name="pvc_quick_play_server_hint">example.com:25565</string>
 </resources>
