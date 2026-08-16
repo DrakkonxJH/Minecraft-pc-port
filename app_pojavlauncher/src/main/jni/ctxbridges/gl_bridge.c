@@ -93,7 +93,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
             printf("EGLBridge: Binding to OpenGL ES\n");
             bindResult = eglBindAPI_p(EGL_OPENGL_ES_API);
         }
-        if (!bindResult) printf("EGLBridge: bind failed: %p\n", eglGetError_p());
+        if (!bindResult) printf("EGLBridge: bind failed: 0x%04x\n", eglGetError_p());
     }
 
     // AUDITORIA 5.5: idem para LIBGL_ES, que so e populada quando LOCAL_RENDERER != null.

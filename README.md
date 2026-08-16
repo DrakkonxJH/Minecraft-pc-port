@@ -38,6 +38,7 @@ Todos corrigidos aqui. Veja o histórico de commits para o detalhe de cada um.
 * [x] Bibliotecas nativas alinhadas para 16 KB page size (NDK 27)
 * [x] Correções de segurança da auditoria aplicadas
 * [x] Correções de estabilidade da auditoria aplicadas
+* [x] **Build compila com sucesso** (APK de debug gerado, 4 ABIs)
 * [x] Assinatura de release desacoplada do repositório
 * [x] `targetSdk 36` + edge-to-edge e predictive back (⚠️ requer validação em dispositivo)
 * [x] Runtimes Java via releases permanentes (bloqueio B1 resolvido)

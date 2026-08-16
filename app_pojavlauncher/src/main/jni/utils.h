@@ -37,7 +37,10 @@ do {                                                                       \
 
 char** convert_to_char_array(JNIEnv *env, jobjectArray jstringArray);
 jobjectArray convert_from_char_array(JNIEnv *env, char **charArray, int num_rows);
-void free_char_array(JNIEnv *env, jobjectArray jstringArray, const char **charArray);
+// AUDITORIA 5.7: recebe char** (o mesmo tipo devolvido por convert_to_char_array),
+// pois a funcao agora tambem da free() no proprio array. Usar const char** aqui
+// gerava -Wincompatible-pointer-types-discards-qualifiers nos dois chamadores.
+void free_char_array(JNIEnv *env, jobjectArray jstringArray, char **charArray);
 jstring convertStringJVM(JNIEnv* srcEnv, JNIEnv* dstEnv, jstring srcStr);
 jintArray convertIntArrayJVM(JNIEnv* srcEnv, JNIEnv* dstEnv, jintArray srcIntArray);
 

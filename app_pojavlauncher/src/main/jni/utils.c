@@ -46,7 +46,7 @@ jobjectArray convert_from_char_array(JNIEnv *env, char **charArray, int num_rows
 	return resultArr;
 }
 
-void free_char_array(JNIEnv *env, jobjectArray jstringArray, const char **charArray) {
+void free_char_array(JNIEnv *env, jobjectArray jstringArray, char **charArray) {
 	// AUDITORIA 5.7: alem de liberar as strings, o proprio array alocado por
 	// convert_to_char_array() precisa ser liberado, caso contrario vaza
 	// num_rows * sizeof(char*) a cada chamada.
@@ -59,7 +59,7 @@ void free_char_array(JNIEnv *env, jobjectArray jstringArray, const char **charAr
 		(*env)->ReleaseStringUTFChars(env, row, charArray[i]);
 		(*env)->DeleteLocalRef(env, row);
 	}
-	free((void*) charArray);
+	free(charArray);
 }
 
 jstring convertStringJVM(JNIEnv* srcEnv, JNIEnv* dstEnv, jstring srcStr) {

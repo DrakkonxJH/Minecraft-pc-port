@@ -214,8 +214,10 @@ EXTERNAL_API void pojavSetWindowHint(int hint, int value) {
             /* Nothing to do: initialization is handled in Java-side */
             // pojavInitVulkan();
             break;
-        case GLFW_OPENGL_API:
+        case GLFW_OPENGL_API: {
             // AUDITORIA 5.5: guarda contra getenv() nulo.
+            // O bloco { } e necessario: em C, um label nao pode ser seguido
+            // diretamente por uma declaracao (so a partir do C23).
             const char *renderer = getenv("MINEDRAKK_RENDERER");
             if (renderer == NULL) {
                 pojav_environ->config_renderer = RENDERER_GL4ES;
@@ -227,6 +229,7 @@ EXTERNAL_API void pojavSetWindowHint(int hint, int value) {
             /* Nothing to do: initialization is called in pojavCreateContext */
             // pojavInitOpenGL();
             break;
+        }
         default:
             printf("GLFW: Unimplemented API 0x%x\n", value);
             abort();

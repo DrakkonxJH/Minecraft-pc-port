@@ -197,6 +197,32 @@ o Gradle escolhe o certo para cada módulo.
 
 ---
 
+## ✅ Estado do build
+
+O build foi validado de ponta a ponta em 16/08/2026 (Ubuntu, Gradle 9.6.1,
+AGP 9.3.1, NDK 27.3.13750724):
+
+```
+BUILD SUCCESSFUL in 9m 4s
+52 actionable tasks: 38 executed, 14 up-to-date
+```
+
+Compilaram sem erro: os 4 módulos Java, os dois LWJGL (3.3.3 e 3.4.1) e o
+código nativo nas **4 arquiteturas** (arm64-v8a, armeabi-v7a, x86, x86_64).
+
+### Avisos conhecidos e inofensivos
+
+| Aviso | Explicação |
+|---|---|
+| `rm: não foi possível remover ... libawt_headless.so` | O `Android.mk` limpa um arquivo que não existe mais. Cosmético. |
+| `Namespace 'org.angelauramc.lwjgl3x' is used in multiple modules` | Os dois AARs do LWJGL compartilham namespace. Herdado do Amethyst; funciona porque as libs têm nomes distintos. |
+| `Unable to strip ... libjnidispatch.so` | Vem sem símbolos de debug. Esperado. |
+| `warn: removing resource string/login_error_invalid_username` | String traduzida sem valor padrão em `values/`. Só afeta esses dois textos em locales exóticos. |
+| `Java compiler version 25 has deprecated support for source/target 8` | O projeto precisa de Java 8 por causa do Minecraft. Continua funcionando. |
+| `Multiple substitutions ... non-positional format` | Centenas de strings traduzidas com dois `%s`. Vêm da Crowdin do upstream; são avisos, não erros. |
+
+---
+
 ## O que observar nos testes
 
 Como as correções que aplicamos são de segurança e estabilidade, vale testar
