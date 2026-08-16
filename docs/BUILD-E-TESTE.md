@@ -236,6 +236,43 @@ find . -name '*.apk' -path '*outputs*'
 
 ---
 
+## O APK não fica no repositório — e por quê
+
+O `.apk` **não é versionado no Git**, por dois motivos:
+
+1. **Limite técnico:** o GitHub rejeita arquivos acima de **100 MB** dentro do
+   repositório. Nosso APK tem ~250–350 MB (leva os JREs 8/17/21 embutidos para
+   4 arquiteturas). Simplesmente não caberia.
+2. **Convenção:** binários compilados não entram no controle de versão. O
+   `.gitignore` já exclui `build/`, onde o APK é gerado.
+
+### Como disponibilizar o APK para baixar no celular
+
+**Opção 1 — GitHub Release** (recomendada, baixa direto pelo navegador do celular):
+
+```bash
+bash scripts/publish_apk.sh
+```
+
+Cria uma release com o APK anexado (releases aceitam até **2 GB** por arquivo).
+Depois é só abrir o link no celular e baixar. Para dar um nome à versão:
+
+```bash
+bash scripts/publish_apk.sh v0.1-teste
+```
+
+Sem o `gh` instalado, dá para fazer pelo site:
+[Releases → Draft a new release](https://github.com/DrakkonxJH/Minecraft-pc-port/releases/new)
+e arrastar o `MineDrakk.apk` para os anexos.
+
+**Opção 2 — CI gera automaticamente:** com o workflow ativo, cada push produz o
+APK em *Actions → run → Artifacts*. (Bloqueado enquanto a conta estiver travada
+por billing — ver seção abaixo.)
+
+**Opção 3 — cabo USB:** `adb install -r MineDrakk.apk`
+
+---
+
 ## ✅ Estado do build
 
 O build foi validado de ponta a ponta em 16/08/2026 (Ubuntu, Gradle 9.6.1,
