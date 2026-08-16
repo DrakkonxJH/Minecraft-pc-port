@@ -109,3 +109,20 @@ jobs:
         with:
           name: app-release
           path: out/app-release.*
+
+# ---------------------------------------------------------------------------
+# NOTA (MineDrakk Java)
+#
+# Este arquivo esta em docs/ como TEMPLATE, e nao em .github/workflows/.
+# Motivo: o agente que montou o fork nao possui a permissao "workflows" no
+# GitHub, entao nao pode criar/atualizar Actions automaticamente.
+#
+# Para ativar a CI, copie manualmente:
+#     mkdir -p .github/workflows
+#     cp docs/ci-android.yml.template .github/workflows/android.yml
+#
+# ANTES de ativar, resolva a pendencia B1 da AUDITORIA.md: o passo "Get JRE 8"
+# aponta para AngelAuraMC/angelauramc-openjdk-build, uma CI de terceiros.
+# Artefatos de GitHub Actions expiram (90 dias por padrao). Hospede os JREs
+# em uma release propria e troque o passo por um download direto.
+# ---------------------------------------------------------------------------
