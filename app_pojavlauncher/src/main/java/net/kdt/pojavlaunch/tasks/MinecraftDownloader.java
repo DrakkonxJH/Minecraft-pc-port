@@ -61,7 +61,6 @@ public class MinecraftDownloader {
 
     private static final ThreadLocal<byte[]> sThreadLocalDownloadBuffer = new ThreadLocal<>();
 
-    private boolean isLocalProfile = false;
     private boolean isOnline;
 
     /**
@@ -75,18 +74,28 @@ public class MinecraftDownloader {
                       @NonNull String realVersion,
                       @NonNull AsyncMinecraftDownloader.DoneListener listener) {
         if(activity != null){
-            isLocalProfile = Tools.isLocalProfile(activity);
             isOnline = Tools.isOnline(activity);
             Tools.switchDemo(Tools.isDemoProfile(activity));
-
         } else {
-            isLocalProfile = true;
+            isOnline = false; // Sem Activity nao ha como consultar a rede
             Tools.switchDemo(true);
         }
 
         sExecutorService.execute(() -> {
             try {
-                if(isLocalProfile || !isOnline) {
+                // O download depende de haver INTERNET, nao do tipo de conta.
+                //
+                // Antes a condicao era `isLocalProfile || !isOnline`, o que impedia
+                // qualquer perfil offline de baixar arquivos do jogo. Como perfis
+                // offline agora tem acesso completo ao launcher, isso quebrava casos
+                // legitimos: selecionar Forge/Fabric sem o vanilla correspondente
+                // instalado resultava em
+                //   "Can't find the source version for 1.21-forge-... (req version=1.21)"
+                // porque o launcher pulava o download do 1.21 base.
+                //
+                // Os arquivos do jogo sao servidos publicamente pela Mojang e nao
+                // exigem autenticacao para download.
+                if(!isOnline) {
                     String versionMessage = realVersion; // Use provided version unless we find its a modded instance
 
                     // See if provided version is a modded version and if that version depends on another jar, check for presence of both jar's .json.
@@ -99,14 +108,25 @@ public class MinecraftDownloader {
                         File vanillaJsonFile = new File(Tools.DIR_HOME_VERSION + "/" + providedJson.inheritsFrom + "/" + providedJson.inheritsFrom + ".json");
                         versionMessage = providedJson.inheritsFrom != null ? providedJson.inheritsFrom : versionMessage;
 
+                        // Uma versao modded so roda se a versao base tambem estiver
+                        // instalada: o json dela declara inheritsFrom e o launcher
+                        // precisa ler os dois.
+                        if (providedJson.inheritsFrom != null && !vanillaJsonFile.exists()) {
+                            throw new RuntimeException("Minecraft " + versionMessage
+                                    + " is needed by " + realVersion);
+                        }
+
                         // Ensure they're both not some 0 byte corrupted json
                         if (providedJsonFile.length() == 0 || vanillaJsonFile.exists() && vanillaJsonFile.length() == 0){
                             throw new RuntimeException("Minecraft "+versionMessage+ " is needed by " +realVersion); }
 
                         listener.onDownloadDone();
                     } catch (Exception e) {
-                        String tryagain = !isOnline ? "Please ensure you have an internet connection" : "Please try again on your Microsoft Account";
-                        Tools.showErrorRemote(versionMessage + " is not currently installed. "+ tryagain, e);
+                        // Nesta ramificacao estamos sempre offline, entao a orientacao
+                        // e sobre conexao e nao sobre o tipo de conta.
+                        Tools.showErrorRemote(versionMessage
+                                + " is not installed and cannot be downloaded while offline."
+                                + " Connect to the internet and launch the game once to download it.", e);
                     }
                 }else {
                 downloadGame(activity, version, realVersion);
