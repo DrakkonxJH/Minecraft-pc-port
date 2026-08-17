@@ -106,4 +106,29 @@
         <item>2</item>
         <item>1</item>
     </string-array>
+    <!-- Modo grafico -->
+    <string-array name="graphics_mode_names">
+        <item>@string/graphics_mode_performance</item>
+        <item>@string/graphics_mode_automatic</item>
+        <item>@string/graphics_mode_quality</item>
+    </string-array>
+    <string-array name="graphics_mode_values" translatable="false">
+        <item>performance</item>
+        <item>automatic</item>
+        <item>quality</item>
+    </string-array>
+
+    <!-- Modelos de controle -->
+    <string-array name="control_preset_names">
+        <item>@string/control_preset_classic</item>
+        <item>@string/control_preset_gamepad</item>
+        <item>@string/control_preset_compact</item>
+        <item>@string/control_preset_lefty</item>
+    </string-array>
+    <string-array name="control_preset_values" translatable="false">
+        <item>classic</item>
+        <item>gamepad</item>
+        <item>compact</item>
+        <item>lefty</item>
+    </string-array>
 </resources>

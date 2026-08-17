@@ -5,6 +5,14 @@
     <net.kdt.pojavlaunch.prefs.BackButtonPreference/>
 
 
+    <ListPreference
+        android:key="controlPreset"
+        app2:icon="@drawable/ic_menu_custom_controls"
+        android:title="@string/control_preset_title"
+        android:summary="@string/control_preset_summary"
+        android:entries="@array/control_preset_names"
+        android:entryValues="@array/control_preset_values" />
+
     <Preference
         android:title="@string/preference_edit_controls_title"
         android:summary="@string/preference_edit_controls_summary"

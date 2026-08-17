@@ -16,6 +16,7 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.prefs.CustomSeekBarPreference;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.utils.DeviceProfile;
+import net.kdt.pojavlaunch.utils.GraphicsMode;
 
 /**
  * Fragment for any settings video related
@@ -49,8 +50,36 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         requirePreference("alternate_surface", SwitchPreferenceCompat.class).setChecked(LauncherPreferences.PREF_USE_ALTERNATE_SURFACE);
         requirePreference("force_vsync", SwitchPreferenceCompat.class).setChecked(LauncherPreferences.PREF_FORCE_VSYNC);
 
+        setupGraphicsMode();
         setupOptimizeButton();
         computeVisibility();
+    }
+
+    /**
+     * Seletor de modo grafico. Ao trocar, aplica na hora os ajustes do modo e
+     * recarrega a tela para os controles refletirem os novos valores -- do
+     * contrario o usuario veria o slider de resolucao com o valor antigo.
+     */
+    private void setupGraphicsMode() {
+        ListPreference graphicsMode = findPreference(GraphicsMode.PREF_KEY);
+        if (graphicsMode == null) return;
+
+        graphicsMode.setOnPreferenceChangeListener((preference, newValue) -> {
+            GraphicsMode mode = GraphicsMode.fromKey(String.valueOf(newValue));
+            mode.apply(requireContext());
+            LauncherPreferences.loadPreferences(requireContext());
+            Toast.makeText(requireContext(),
+                    getString(R.string.graphics_mode_applied, getString(mode.getTitleRes())),
+                    Toast.LENGTH_SHORT).show();
+            reloadScreen();
+            return true;
+        });
+    }
+
+    /** Recria a tela de preferencias para refletir valores alterados em lote. */
+    private void reloadScreen() {
+        setPreferenceScreen(null);
+        onCreatePreferences(null, null);
     }
 
     /**
@@ -81,9 +110,7 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
                                 getString(R.string.preference_optimize_device_done,
                                         describeTier(applied)),
                                 Toast.LENGTH_LONG).show();
-                        // Recria a tela para os controles refletirem os novos valores.
-                        setPreferenceScreen(null);
-                        onCreatePreferences(null, null);
+                        reloadScreen();
                     })
                     .show();
             return true;

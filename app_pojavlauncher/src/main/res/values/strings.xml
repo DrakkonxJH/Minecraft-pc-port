@@ -559,4 +559,27 @@
     <string name="device_tier_low">entry level</string>
     <string name="device_tier_medium">mid range</string>
     <string name="device_tier_high">high end</string>
+    <!-- Modo grafico: desempenho / automatico / qualidade -->
+    <string name="graphics_mode_title">Graphics mode</string>
+    <string name="graphics_mode_performance">Performance</string>
+    <string name="graphics_mode_performance_description">More frames per second and a cooler phone. Renders at a lower resolution.</string>
+    <string name="graphics_mode_automatic">Automatic</string>
+    <string name="graphics_mode_automatic_description">Let the launcher pick based on your device. Recommended.</string>
+    <string name="graphics_mode_quality">Quality</string>
+    <string name="graphics_mode_quality_description">Sharpest image at full resolution. Uses more battery and may drop frames.</string>
+    <string name="graphics_mode_applied">%1$s mode applied</string>
+    <!-- Modelos de controle -->
+    <string name="control_preset_title">Control layout</string>
+    <string name="control_preset_summary">Pick a ready-made layout instead of building one button by button.</string>
+    <string name="control_preset_classic">Classic</string>
+    <string name="control_preset_classic_description">The familiar layout, with movement keys on the left.</string>
+    <string name="control_preset_gamepad">Gamepad</string>
+    <string name="control_preset_gamepad_description">D-pad on the left and action buttons in a diamond on the right, like a console controller.</string>
+    <string name="control_preset_compact">Compact</string>
+    <string name="control_preset_compact_description">Smaller and more transparent buttons, leaving more of the screen visible.</string>
+    <string name="control_preset_lefty">Left-handed</string>
+    <string name="control_preset_lefty_description">Mirrored layout, with movement on the right.</string>
+    <string name="control_preset_applied">%1$s layout applied</string>
+    <string name="control_preset_failed">Could not create the layout</string>
+    <string name="control_sprint">Sprint</string>
 </resources>

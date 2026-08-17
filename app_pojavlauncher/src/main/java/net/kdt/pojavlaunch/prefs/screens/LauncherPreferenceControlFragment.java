@@ -3,13 +3,18 @@ package net.kdt.pojavlaunch.prefs.screens;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.widget.Toast;
 
+import androidx.preference.ListPreference;
 import androidx.preference.PreferenceCategory;
 
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.prefs.CustomSeekBarPreference;
+import net.kdt.pojavlaunch.customcontrols.ControlPresets;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+
+import java.io.File;
 
 public class LauncherPreferenceControlFragment extends LauncherPreferenceFragment {
     private boolean mGyroAvailable = false;
@@ -29,6 +34,8 @@ public class LauncherPreferenceControlFragment extends LauncherPreferenceFragmen
 
         //Triggers a write for some reason which resets the value
         addPreferencesFromResource(R.xml.pref_control);
+
+        setupControlPresets();
 
         CustomSeekBarPreference seek2 = requirePreference("timeLongPressTrigger",
                 CustomSeekBarPreference.class);
@@ -98,4 +105,36 @@ public class LauncherPreferenceControlFragment extends LauncherPreferenceFragmen
         requirePreference("gyroSmoothing").setVisible(LauncherPreferences.PREF_ENABLE_GYRO);
     }
 
+
+    /**
+     * Seletor de modelo de controles.
+     * <p>
+     * Gera o layout escolhido em {@code controlmap/<preset>.json} e o define
+     * como padrao. O layout anterior nao e apagado: se o usuario tinha um
+     * arquivo proprio, ele continua la para ser reaberto no editor.
+     */
+    private void setupControlPresets() {
+        ListPreference presetPreference = findPreference("controlPreset");
+        if (presetPreference == null) return;
+
+        presetPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+            String preset = String.valueOf(newValue);
+            File generated = ControlPresets.generate(requireContext(), preset);
+            if (generated == null) {
+                Toast.makeText(requireContext(), R.string.control_preset_failed,
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
+            // Passa a ser o layout carregado ao entrar no jogo.
+            LauncherPreferences.DEFAULT_PREF.edit()
+                    .putString("defaultCtrl", generated.getAbsolutePath())
+                    .apply();
+            LauncherPreferences.loadPreferences(requireContext());
+            Toast.makeText(requireContext(),
+                    getString(R.string.control_preset_applied,
+                            getString(ControlPresets.titleRes(preset))),
+                    Toast.LENGTH_SHORT).show();
+            return true;
+        });
+    }
 }

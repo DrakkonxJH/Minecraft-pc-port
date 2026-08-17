@@ -387,4 +387,27 @@
     <string name="device_tier_low">de entrada</string>
     <string name="device_tier_medium">intermediario</string>
     <string name="device_tier_high">topo de linha</string>
+    <!-- Modo grafico: desempenho / automatico / qualidade -->
+    <string name="graphics_mode_title">Modo grafico</string>
+    <string name="graphics_mode_performance">Desempenho</string>
+    <string name="graphics_mode_performance_description">Mais quadros por segundo e aparelho mais frio. Renderiza em resolucao menor.</string>
+    <string name="graphics_mode_automatic">Automatico</string>
+    <string name="graphics_mode_automatic_description">Deixe o launcher escolher conforme o seu aparelho. Recomendado.</string>
+    <string name="graphics_mode_quality">Qualidade</string>
+    <string name="graphics_mode_quality_description">Imagem mais nitida, em resolucao total. Gasta mais bateria e pode perder quadros.</string>
+    <string name="graphics_mode_applied">Modo %1$s aplicado</string>
+    <!-- Modelos de controle -->
+    <string name="control_preset_title">Modelo de controles</string>
+    <string name="control_preset_summary">Escolha um modelo pronto em vez de montar botao por botao.</string>
+    <string name="control_preset_classic">Classico</string>
+    <string name="control_preset_classic_description">O modelo de sempre, com as teclas de movimento a esquerda.</string>
+    <string name="control_preset_gamepad">Gamepad</string>
+    <string name="control_preset_gamepad_description">Direcional a esquerda e botoes de acao em losango a direita, como num controle de video game.</string>
+    <string name="control_preset_compact">Compacto</string>
+    <string name="control_preset_compact_description">Botoes menores e mais transparentes, deixando mais tela livre.</string>
+    <string name="control_preset_lefty">Canhoto</string>
+    <string name="control_preset_lefty_description">Modelo espelhado, com o movimento a direita.</string>
+    <string name="control_preset_applied">Modelo %1$s aplicado</string>
+    <string name="control_preset_failed">Nao foi possivel criar o modelo</string>
+    <string name="control_sprint">Correr</string>
 </resources>
