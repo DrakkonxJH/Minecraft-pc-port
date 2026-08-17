@@ -223,14 +223,20 @@ O build gera **um APK por arquitetura**, mais um universal:
 
 | Arquivo | Tamanho aprox. | Quando usar |
 |---|---|---|
-| `...-arm64-v8a-debug.apk` | ~180 MB | Praticamente todo celular de 2017 em diante |
-| `...-armeabi-v7a-debug.apk` | ~160 MB | Aparelhos antigos de 32 bits |
-| `...-x86_64-debug.apk` | ~170 MB | Emuladores, Chromebooks |
-| `...-universal-debug.apk` | ~456 MB | Quando não se sabe a arquitetura de destino |
+| `...-arm64-v8a-debug.apk` | ~411 MB | Praticamente todo celular de 2017 em diante |
+| `...-armeabi-v7a-debug.apk` | ~406 MB | Aparelhos antigos de 32 bits |
+| `...-x86_64-debug.apk` | ~410 MB | Emuladores, Chromebooks |
+| `...-universal-debug.apk` | ~477 MB | Quando não se sabe a arquitetura de destino |
 
-> Os tamanhos acima são aproximados. O AGP remove os símbolos de depuração das
-> bibliotecas nativas ao empacotar, então o APK fica bem menor que a soma dos
-> arquivos em `jniLibs/`.
+> **Por que a diferença entre eles é pequena.** O `splits.abi` separa apenas as
+> bibliotecas nativas de `jniLibs/`. Os **runtimes Java** ficam em
+> `assets/components/jre*/`, e o `fetch_jre.sh` baixa um tarball por
+> arquitetura para cada runtime (17, 21 e 25). Assets não são divididos por
+> ABI — o Android empacota `assets/` igual em todas as saídas de uma mesma
+> variante —, então todo APK carrega os runtimes das quatro arquiteturas.
+>
+> Para um APK realmente enxuto seria preciso baixar os runtimes sob demanda,
+> em vez de embuti-los. É uma mudança de arquitetura, não de configuração.
 
 O `get_apk.sh` escolhe sozinho: se houver um aparelho conectado por USB, usa a
 arquitetura dele; senão, prefere `arm64-v8a`. Para forçar:

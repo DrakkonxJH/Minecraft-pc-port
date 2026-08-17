@@ -12,6 +12,20 @@
 #     bash scripts/fetch_jre.sh 8          # apenas o JRE 8
 #     bash scripts/fetch_jre.sh 8 17 21 25
 #
+#     MINEDRAKK_JRE_ARCHES=arm64 bash scripts/fetch_jre.sh
+#         baixa apenas a arquitetura indicada
+#
+# TAMANHO DO APK: por padrao baixa as quatro arquiteturas (arm, arm64, x86,
+# x86_64) de cada runtime. Como os runtimes ficam em assets/, e assets NAO sao
+# divididos pelo splits.abi, todas elas acabam dentro de TODO APK gerado --
+# inclusive o de arm64. Baixar so a arquitetura do seu aparelho reduz bastante
+# o APK:
+#
+#     MINEDRAKK_JRE_ARCHES=arm64 bash scripts/fetch_jre.sh 21
+#
+# O APK resultante so roda em aparelhos arm64 (praticamente todos desde 2017).
+# Para distribuir a terceiros, gere com todas as arquiteturas.
+#
 # Requisitos: bash, curl, tar (com suporte a xz), sha256sum
 #
 set -euo pipefail
@@ -22,7 +36,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSETS_DIR="${SCRIPT_DIR}/../app_pojavlauncher/src/main/assets/components"
 
 # Arquiteturas nomeadas como o app espera (Architecture.archAsString()).
-ARCHES=(arm arm64 x86 x86_64)
+# Pode ser restringido por MINEDRAKK_JRE_ARCHES (lista separada por espaco ou
+# virgula) para gerar um APK menor -- ver o cabecalho deste arquivo.
+if [ -n "${MINEDRAKK_JRE_ARCHES:-}" ]; then
+    IFS=', ' read -r -a ARCHES <<< "$MINEDRAKK_JRE_ARCHES"
+    for a in "${ARCHES[@]}"; do
+        case "$a" in
+            arm|arm64|x86|x86_64) ;;
+            *) printf '[x] Arquitetura invalida: %s (use arm, arm64, x86, x86_64)\n' "$a" >&2
+               exit 1 ;;
+        esac
+    done
+else
+    ARCHES=(arm arm64 x86 x86_64)
+fi
 
 # Mapeia a versao do Java para: <tag da release>:<diretorio de destino>
 jre_target() {
