@@ -551,4 +551,12 @@
     <string name="auth_select_title">How do you want to play?</string>
     <string name="auth_select_microsoft_subtitle">Sign in with Microsoft. Required to join online servers and to use your own skin and cape.</string>
     <string name="auth_select_local_subtitle">Pick a nickname and play right away. Works in singleplayer, on LAN and on offline-mode servers.</string>
+    <!-- Perfil de estabilidade por aparelho -->
+    <string name="preference_optimize_device_title">Optimize for this device</string>
+    <string name="preference_optimize_device_description">Detects your hardware and applies the settings known to be the most stable for it. Overwrites your current video settings.</string>
+    <string name="preference_optimize_device_confirm">This will replace your video settings with the ones recommended for your device. Continue?</string>
+    <string name="preference_optimize_device_done">Settings applied for a %1$s device</string>
+    <string name="device_tier_low">entry level</string>
+    <string name="device_tier_medium">mid range</string>
+    <string name="device_tier_high">high end</string>
 </resources>

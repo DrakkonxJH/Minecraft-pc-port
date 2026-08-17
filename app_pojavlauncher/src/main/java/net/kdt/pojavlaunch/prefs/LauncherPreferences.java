@@ -15,6 +15,7 @@ import android.util.Log;
 
 import net.kdt.pojavlaunch.*;
 import net.kdt.pojavlaunch.multirt.MultiRTUtils;
+import net.kdt.pojavlaunch.utils.DeviceProfile;
 import net.kdt.pojavlaunch.utils.FileUtils;
 import net.kdt.pojavlaunch.utils.JREUtils;
 
@@ -81,6 +82,19 @@ public class LauncherPreferences {
     public static void loadPreferences(Context ctx) {
         //Required for CTRLDEF_FILE and MultiRT
         Tools.initStorageConstants(ctx);
+
+        // Na primeira execucao, aplica os padroes adequados a classe do aparelho.
+        // Precisa vir antes das leituras abaixo para que os valores gravados ja
+        // sejam vistos nesta mesma carga. Nao sobrescreve nada que o usuario
+        // tenha ajustado -- ver DeviceProfile.applyRecommendedDefaults.
+        try {
+            DeviceProfile.applyRecommendedDefaults(ctx, false);
+        } catch (RuntimeException e) {
+            // Configuracao de conveniencia: se falhar, o launcher segue com os
+            // padroes historicos em vez de nao abrir.
+            Log.w("LauncherPreferences", "Nao foi possivel aplicar o perfil do aparelho", e);
+        }
+
         boolean isDevicePowerful = isDevicePowerful(ctx);
 
         PREF_BUTTONSIZE = DEFAULT_PREF.getInt("buttonscale", 100);

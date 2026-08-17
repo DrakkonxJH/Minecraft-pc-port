@@ -1613,6 +1613,8 @@ public final class Tools {
         GLInfoUtils.GLInfo info = GLInfoUtils.getGlInfo();
         Logger.appendToLog("Info: Graphics device: "+info.vendor+ " "+info.renderer+" (OpenGL ES "+info.glesMajorVersion+")");
         Logger.appendToLog("Info: GPU family: " + info.getVendorFamily());
+        Logger.appendToLog("Info: Resolution scale: "
+                + Math.round(LauncherPreferences.PREF_SCALE_FACTOR * 100) + "%");
         if (info.isUnknown()) {
             // Vale destacar: com GPU nao identificada caimos nos caminhos mais
             // conservadores e varias mitigacoes especificas nao sao aplicadas.

@@ -153,6 +153,17 @@ public class GLInfoUtils {
      * the renderer and the major GLES version
      * @return the info
      */
+    /**
+     * Se a consulta ao driver grafico ja foi feita.
+     * <p>
+     * Existe para que codigo executado na inicializacao possa usar a informacao
+     * quando ela ja estiver em cache, sem pagar o custo de criar um contexto EGL
+     * na thread principal so para consultar.
+     */
+    public static boolean hasInfo() {
+        return info != null;
+    }
+
     public static GLInfo getGlInfo() {
         if(info != null) return info;
         Log.i("GLInfoUtils", "Querying graphics device info...");

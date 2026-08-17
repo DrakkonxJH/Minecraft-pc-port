@@ -8,7 +8,7 @@ static def getDate() { return new Date().format('yyyyMMdd') }
  * Versao semantica do MineDrakk. Unica fonte da verdade: mude aqui ao lancar.
  * O versionCode e derivado dela, entao nao ha dois numeros para manter em sincronia.
  */
-ext.minedrakkVersion = "0.1.3"
+ext.minedrakkVersion = "0.1.4"
 
 // Avaliado uma unica vez, no corpo do script (nao em metodo static: metodos
 // estaticos nao enxergam `gradle`, o que causava
@@ -230,6 +230,16 @@ android {
     }
 
     compileOptions {
+        // Desugaring de biblioteca: reescreve chamadas a APIs modernas do Java
+        // para uma implementacao empacotada no proprio APK.
+        //
+        // Sem isto, usar String.isBlank(), Set.of(), java.time ou streams
+        // compilava sem aviso (o compilador so olha o sourceCompatibility) e
+        // quebrava com NoSuchMethodError em aparelhos com Android antigo -- o
+        // minSdk do app e 21. Ja aconteceu quatro vezes neste codigo.
+        //
+        // multiDexEnabled nao e necessario: so seria exigido com minSdk <= 20.
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -313,5 +323,8 @@ dependencies {
 
     implementation "net.java.dev.jna:jna:5.14.0@aar"
 
+    // Implementacao das APIs modernas do Java para aparelhos antigos.
+    // A versao 2.x exige AGP 7.4+; o projeto usa AGP 9.3.1.
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 }
 apply from: rootProject.file('gradle/prefab_bypass.gradle')

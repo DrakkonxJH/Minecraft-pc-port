@@ -3,6 +3,9 @@ package net.kdt.pojavlaunch.prefs.screens;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import androidx.preference.ListPreference;
 import androidx.preference.SwitchPreference;
@@ -12,6 +15,7 @@ import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.prefs.CustomSeekBarPreference;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+import net.kdt.pojavlaunch.utils.DeviceProfile;
 
 /**
  * Fragment for any settings video related
@@ -45,7 +49,53 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         requirePreference("alternate_surface", SwitchPreferenceCompat.class).setChecked(LauncherPreferences.PREF_USE_ALTERNATE_SURFACE);
         requirePreference("force_vsync", SwitchPreferenceCompat.class).setChecked(LauncherPreferences.PREF_FORCE_VSYNC);
 
+        setupOptimizeButton();
         computeVisibility();
+    }
+
+    /**
+     * Botao que reaplica o perfil de estabilidade do aparelho.
+     * <p>
+     * Diferente da aplicacao automatica na primeira execucao, aqui o usuario
+     * pediu explicitamente, entao sobrescrevemos os ajustes manuais dele -- por
+     * isso a confirmacao antes.
+     */
+    private void setupOptimizeButton() {
+        androidx.preference.Preference optimize = findPreference("optimizeForDevice");
+        if (optimize == null) return;
+
+        DeviceProfile.Tier tier = DeviceProfile.detectTier(requireContext());
+        optimize.setSummary(getString(R.string.preference_optimize_device_description)
+                + "\n\n" + DeviceProfile.describe(requireContext(), tier));
+
+        optimize.setOnPreferenceClickListener(preference -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.preference_optimize_device_title)
+                    .setMessage(R.string.preference_optimize_device_confirm)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        DeviceProfile.Tier applied =
+                                DeviceProfile.applyRecommendedDefaults(requireContext(), true);
+                        LauncherPreferences.loadPreferences(requireContext());
+                        Toast.makeText(requireContext(),
+                                getString(R.string.preference_optimize_device_done,
+                                        describeTier(applied)),
+                                Toast.LENGTH_LONG).show();
+                        // Recria a tela para os controles refletirem os novos valores.
+                        setPreferenceScreen(null);
+                        onCreatePreferences(null, null);
+                    })
+                    .show();
+            return true;
+        });
+    }
+
+    private String describeTier(DeviceProfile.Tier tier) {
+        switch (tier) {
+            case LOW:  return getString(R.string.device_tier_low);
+            case HIGH: return getString(R.string.device_tier_high);
+            default:   return getString(R.string.device_tier_medium);
+        }
     }
 
     @Override

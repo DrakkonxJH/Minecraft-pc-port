@@ -379,4 +379,12 @@
     <string name="auth_select_title">Como voce quer jogar?</string>
     <string name="auth_select_microsoft_subtitle">Entre com a Microsoft. Necessario para entrar em servidores online e usar sua skin e capa.</string>
     <string name="auth_select_local_subtitle">Escolha um apelido e jogue na hora. Funciona no modo um jogador, em LAN e em servidores no modo offline.</string>
+    <!-- Perfil de estabilidade por aparelho -->
+    <string name="preference_optimize_device_title">Otimizar para este aparelho</string>
+    <string name="preference_optimize_device_description">Detecta o hardware e aplica as configuracoes mais estaveis para ele. Substitui suas configuracoes de video atuais.</string>
+    <string name="preference_optimize_device_confirm">Isto vai substituir suas configuracoes de video pelas recomendadas para o seu aparelho. Continuar?</string>
+    <string name="preference_optimize_device_done">Configuracoes aplicadas para um aparelho %1$s</string>
+    <string name="device_tier_low">de entrada</string>
+    <string name="device_tier_medium">intermediario</string>
+    <string name="device_tier_high">topo de linha</string>
 </resources>

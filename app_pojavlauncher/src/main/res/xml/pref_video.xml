@@ -6,6 +6,13 @@
 
     <PreferenceCategory android:title="@string/preference_category_video" >
         <Preference
+            android:key="optimizeForDevice"
+            android:persistent="false"
+            android:icon="@drawable/ic_setting_engine"
+            android:summary="@string/preference_optimize_device_description"
+            android:title="@string/preference_optimize_device_title" />
+
+        <Preference
             android:title="@string/mcl_setting_title_renderer_settings"
             android:summary="@string/mcl_setting_title_renderer_subtitle"
             android:icon="@drawable/ic_setting_engine"
