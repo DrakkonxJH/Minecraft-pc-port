@@ -8,7 +8,7 @@ static def getDate() { return new Date().format('yyyyMMdd') }
  * Versao semantica do MineDrakk. Unica fonte da verdade: mude aqui ao lancar.
  * O versionCode e derivado dela, entao nao ha dois numeros para manter em sincronia.
  */
-ext.minedrakkVersion = "0.1.6"
+ext.minedrakkVersion = "0.1.7"
 
 // Avaliado uma unica vez, no corpo do script (nao em metodo static: metodos
 // estaticos nao enxergam `gradle`, o que causava
@@ -281,6 +281,17 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true
+            // O AGP remove os simbolos de depuracao das bibliotecas nativas ao
+            // empacotar; keepDebugSymbols lista as excecoes a essa regra.
+            //
+            // NAO tente reduzir o APK removendo as secoes .debug_* dos .so no
+            // repositorio: ja foi tentado e quebrou o app. O carregador do
+            // Android (bionic) exige e_shentsize == 0x40 no header ELF mesmo
+            // quando nao ha tabela de secoes, e zerar esse campo produz
+            //   dlopen failed: has unsupported e_shentsize: 0x0 (expected 0x40)
+            // O erro so aparece em tempo de execucao, ao carregar a biblioteca.
+            // Como o AGP ja faz esse trabalho corretamente na hora de empacotar,
+            // mexer nos arquivos versionados nao traria ganho algum no APK final.
             keepDebugSymbols += ['**/libcutils.so']
             pickFirsts += ['**/libbytehook.so']
         }

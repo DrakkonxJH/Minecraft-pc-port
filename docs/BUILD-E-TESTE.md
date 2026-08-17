@@ -223,10 +223,14 @@ O build gera **um APK por arquitetura**, mais um universal:
 
 | Arquivo | Tamanho aprox. | Quando usar |
 |---|---|---|
-| `...-arm64-v8a-debug.apk` | ~136 MB | Praticamente todo celular de 2017 em diante |
-| `...-armeabi-v7a-debug.apk` | ~120 MB | Aparelhos antigos de 32 bits |
-| `...-x86_64-debug.apk` | ~127 MB | Emuladores, Chromebooks |
-| `...-universal-debug.apk` | ~411 MB | Quando não se sabe a arquitetura de destino |
+| `...-arm64-v8a-debug.apk` | ~180 MB | Praticamente todo celular de 2017 em diante |
+| `...-armeabi-v7a-debug.apk` | ~160 MB | Aparelhos antigos de 32 bits |
+| `...-x86_64-debug.apk` | ~170 MB | Emuladores, Chromebooks |
+| `...-universal-debug.apk` | ~456 MB | Quando não se sabe a arquitetura de destino |
+
+> Os tamanhos acima são aproximados. O AGP remove os símbolos de depuração das
+> bibliotecas nativas ao empacotar, então o APK fica bem menor que a soma dos
+> arquivos em `jniLibs/`.
 
 O `get_apk.sh` escolhe sozinho: se houver um aparelho conectado por USB, usa a
 arquitetura dele; senão, prefere `arm64-v8a`. Para forçar:
