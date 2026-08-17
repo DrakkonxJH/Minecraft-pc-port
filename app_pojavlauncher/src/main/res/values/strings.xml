@@ -585,4 +585,22 @@
     <!-- Tela inicial reorganizada -->
     <string name="launcher_selected_profile">Selected profile</string>
     <string name="launcher_shortcuts">Shortcuts</string>
+    <!-- Gerenciador de mods do perfil -->
+    <string name="mod_manager_open">Manage mods</string>
+    <string name="mod_manager_title">Mods</string>
+    <string name="mod_manager_summary">%1$d mods, %2$d enabled</string>
+    <string name="mod_manager_add">Add .jar</string>
+    <string name="mod_manager_browse">Find mods</string>
+    <string name="mod_manager_browse_message">Opens a mod catalogue in your browser. Download the .jar there, then come back and use \"Add .jar\" to install it into this profile.</string>
+    <string name="mod_manager_empty">No mods in this profile yet.\n\nUse \"Add .jar\" to install one, or \"Find mods\" to browse CurseForge and Modrinth.</string>
+    <string name="mod_manager_actions">Mod options</string>
+    <string name="mod_manager_update">Update (replace .jar)</string>
+    <string name="mod_manager_delete">Remove</string>
+    <string name="mod_manager_delete_confirm">Remove %1$s permanently?</string>
+    <string name="mod_manager_delete_failed">Could not remove the file</string>
+    <string name="mod_manager_toggle_failed">Could not rename the file</string>
+    <string name="mod_manager_added">Mod added</string>
+    <string name="mod_manager_updated">%1$s updated</string>
+    <string name="mod_manager_add_failed">Could not add the mod: %1$s</string>
+    <string name="mod_manager_open_count">Manage mods (%1$d) \u2014 %2$s</string>
 </resources>

@@ -26,6 +26,7 @@ import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.extra.ExtraConstants;
 import net.kdt.pojavlaunch.extra.ExtraCore;
+import net.kdt.pojavlaunch.mods.ModManager;
 import net.kdt.pojavlaunch.multirt.MultiRTUtils;
 import net.kdt.pojavlaunch.multirt.RTSpinnerAdapter;
 import net.kdt.pojavlaunch.multirt.Runtime;
@@ -50,7 +51,7 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
     private String mProfileKey;
     private MinecraftProfile mTempProfile = null;
     private String mValueToConsume = "";
-    private Button mSaveButton, mDeleteButton, mControlSelectButton, mGameDirButton, mVersionSelectButton;
+    private Button mSaveButton, mDeleteButton, mControlSelectButton, mGameDirButton, mVersionSelectButton, mModsButton;
     private Spinner mDefaultRuntime, mDefaultRenderer;
     private EditText mDefaultName, mDefaultJvmArgument, mQuickPlayServer;
     private TextView mDefaultPath, mDefaultVersion, mDefaultControl;
@@ -111,6 +112,17 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         View.OnClickListener gameDirListener = getGameDirListener();
         mGameDirButton.setOnClickListener(gameDirListener);
         mDefaultPath.setOnClickListener(gameDirListener);
+
+        // Abre o gerenciador de mods deste perfil. Salvamos antes de navegar
+        // para que uma mudanca de caminho feita agora ja valha la -- do
+        // contrario o gerenciador mostraria a pasta antiga.
+        mModsButton.setOnClickListener(v -> {
+            save();
+            Bundle args = new Bundle();
+            args.putString(ModManagerFragment.BUNDLE_PROFILE_KEY, mProfileKey);
+            Tools.swapFragment(requireActivity(), ModManagerFragment.class,
+                    ModManagerFragment.TAG, args);
+        });
 
         View.OnClickListener controlSelectListener = getControlSelectListener();
         mControlSelectButton.setOnClickListener(controlSelectListener);
@@ -197,6 +209,29 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         mDefaultName.setText(mTempProfile.name);
         mDefaultPath.setText(mTempProfile.gameDir == null ? "" : mTempProfile.gameDir);
         mDefaultControl.setText(mTempProfile.controlFile == null ? "" : mTempProfile.controlFile);
+        updateModsButtonLabel();
+    }
+
+    /**
+     * Mostra no botao quantos mods o perfil tem e de qual pasta eles vem.
+     * <p>
+     * Esta e a correcao para a confusao mais comum do launcher: perfis de
+     * modpack usam {@code custom_instances/<nome>} como diretorio do jogo,
+     * enquanto perfis criados a mao usam o {@code .minecraft} padrao. Sem essa
+     * indicacao, era natural copiar os mods para uma pasta e o jogo carregar
+     * de outra -- e o sintoma era o jogo abrir sem os mods, sem erro nenhum.
+     */
+    private void updateModsButtonLabel() {
+        if (mModsButton == null || mTempProfile == null) return;
+        try {
+            int count = ModManager.listMods(mTempProfile).size();
+            String folder = ModManager.describeModsFolder(mTempProfile);
+            mModsButton.setText(getString(R.string.mod_manager_open_count, count, folder));
+        } catch (RuntimeException e) {
+            // Rotulo informativo: nunca deve impedir a tela de abrir.
+            Log.w("ProfileEditor", "Nao foi possivel contar os mods", e);
+            mModsButton.setText(R.string.mod_manager_open);
+        }
     }
 
     private MinecraftProfile getProfile(@NonNull String profile){
@@ -239,6 +274,7 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         mControlSelectButton = view.findViewById(R.id.vprof_editor_ctrl_button);
         mVersionSelectButton = view.findViewById(R.id.vprof_editor_version_button);
         mGameDirButton = view.findViewById(R.id.vprof_editor_path_button);
+        mModsButton = view.findViewById(R.id.vprof_editor_mods_button);
         mProfileIcon = view.findViewById(R.id.vprof_editor_profile_icon);
     }
 

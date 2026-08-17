@@ -413,4 +413,22 @@
     <!-- Tela inicial reorganizada -->
     <string name="launcher_selected_profile">Perfil selecionado</string>
     <string name="launcher_shortcuts">Atalhos</string>
+    <!-- Gerenciador de mods do perfil -->
+    <string name="mod_manager_open">Gerenciar mods</string>
+    <string name="mod_manager_title">Mods</string>
+    <string name="mod_manager_summary">%1$d mods, %2$d ativos</string>
+    <string name="mod_manager_add">Adicionar .jar</string>
+    <string name="mod_manager_browse">Procurar mods</string>
+    <string name="mod_manager_browse_message">Abre um catalogo de mods no navegador. Baixe o .jar por la e volte aqui para instalar com \"Adicionar .jar\".</string>
+    <string name="mod_manager_empty">Nenhum mod neste perfil ainda.\n\nUse \"Adicionar .jar\" para instalar um, ou \"Procurar mods\" para abrir o CurseForge e o Modrinth.</string>
+    <string name="mod_manager_actions">Opcoes do mod</string>
+    <string name="mod_manager_update">Atualizar (trocar o .jar)</string>
+    <string name="mod_manager_delete">Remover</string>
+    <string name="mod_manager_delete_confirm">Remover %1$s definitivamente?</string>
+    <string name="mod_manager_delete_failed">Nao foi possivel remover o arquivo</string>
+    <string name="mod_manager_toggle_failed">Nao foi possivel renomear o arquivo</string>
+    <string name="mod_manager_added">Mod adicionado</string>
+    <string name="mod_manager_updated">%1$s atualizado</string>
+    <string name="mod_manager_add_failed">Nao foi possivel adicionar o mod: %1$s</string>
+    <string name="mod_manager_open_count">Gerenciar mods (%1$d) \u2014 %2$s</string>
 </resources>

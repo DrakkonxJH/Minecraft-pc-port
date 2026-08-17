@@ -162,6 +162,11 @@ public final class Tools {
         if(SDK_INT >= 29) {
             return ctx.getExternalFilesDir(null);
         }else{
+            // Caminho legado herdado do Amethyst. NAO renomear para
+            // "games/MineDrakk": este ramo so roda em Android 9 ou anterior, e
+            // trocar o nome faria o launcher deixar de enxergar mundos, mods e
+            // perfis ja existentes desses aparelhos, sem aviso nenhum. Um
+            // rebranding aqui exigiria migrar os dados antes.
             return new File(Environment.getExternalStorageDirectory(),"games/Amethyst");
         }
     }

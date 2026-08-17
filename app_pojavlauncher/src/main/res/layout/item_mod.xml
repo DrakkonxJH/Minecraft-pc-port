@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Um mod na lista do gerenciador -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/_6sdp"
+    android:background="@drawable/background_shortcut_tile"
+    android:paddingHorizontal="@dimen/_10sdp"
+    android:paddingVertical="@dimen/_8sdp">
+
+    <!-- O switch e a acao principal: liga/desliga sem apagar o arquivo -->
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/mod_item_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/mod_item_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/primary_text"
+        android:textSize="@dimen/_10ssp"
+        tools:text="Sodium"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/mod_item_switch"
+        app:layout_constraintEnd_toStartOf="@id/mod_item_menu" />
+
+    <TextView
+        android:id="@+id/mod_item_details"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:maxLines="1"
+        android:ellipsize="middle"
+        android:textColor="@color/tertiary_text"
+        android:textSize="@dimen/_8ssp"
+        tools:text="0.5.8+mc1.20.1 - 1.2 MB"
+        app:layout_constraintTop_toBottomOf="@id/mod_item_name"
+        app:layout_constraintStart_toEndOf="@id/mod_item_switch"
+        app:layout_constraintEnd_toStartOf="@id/mod_item_menu" />
+
+    <ImageButton
+        android:id="@+id/mod_item_menu"
+        android:layout_width="@dimen/_32sdp"
+        android:layout_height="@dimen/_32sdp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/mod_manager_actions"
+        android:src="@drawable/ic_sharp_settings_24"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

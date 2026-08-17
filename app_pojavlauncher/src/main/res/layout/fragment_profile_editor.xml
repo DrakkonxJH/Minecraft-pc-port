@@ -223,6 +223,23 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/vprof_editor_path" />
 
+            <!--
+                 Atalho para o gerenciador de mods deste perfil. Fica logo
+                 abaixo do caminho do jogo de proposito: os dois tratam do
+                 mesmo assunto, e ver a pasta ajuda a entender de onde os mods
+                 sao carregados.
+            -->
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/vprof_editor_mods_button"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/_42sdp"
+                android:layout_marginTop="@dimen/_14sdp"
+                android:text="@string/mod_manager_open"
+                android:textSize="@dimen/_11ssp"
+                app:layout_constraintTop_toBottomOf="@id/vprof_editor_path"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
             <TextView
                 android:id="@+id/textView2"
                 android:layout_width="wrap_content"
@@ -240,7 +257,7 @@
                 android:paddingVertical="0px"
 
 
-                app:layout_constraintTop_toBottomOf="@+id/vprof_editor_path"
+                app:layout_constraintTop_toBottomOf="@+id/vprof_editor_mods_button"
 
                 tools:paddingVertical="@dimen/_12sdp" />
 
