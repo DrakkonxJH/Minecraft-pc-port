@@ -1,13 +1,28 @@
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android" >
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Barra de progresso dos downloads. Antes era um retangulo reto usando a cor
+    de fundo do app como trilho, o que a fazia sumir sobre a barra inferior.
+    Agora tem cantos arredondados, trilho visivel e o degrade esmeralda da
+    identidade MineDrakk.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:id="@android:id/background">
-        <color android:color="@color/background_app"/>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/_6sdp" />
+            <solid android:color="@color/background_overlay" />
+        </shape>
     </item>
-
 
     <item android:id="@android:id/progress">
         <clip>
-             <color android:color='@color/minebutton_color'/>
+            <shape android:shape="rectangle">
+                <corners android:radius="@dimen/_6sdp" />
+                <gradient
+                    android:startColor="@color/brand_primary_dark"
+                    android:endColor="@color/brand_primary"
+                    android:angle="0" />
+            </shape>
         </clip>
     </item>
 

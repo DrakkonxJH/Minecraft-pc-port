@@ -24,6 +24,7 @@ import net.kdt.pojavlaunch.mirrors.MirrorTamperedException;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.utils.DownloadUtils;
 import net.kdt.pojavlaunch.utils.FileUtils;
+import net.kdt.pojavlaunch.utils.TimeRemaining;
 import net.kdt.pojavlaunch.value.DependentLibrary;
 import net.kdt.pojavlaunch.value.MinecraftClientInfo;
 import net.kdt.pojavlaunch.value.MinecraftLibraryArtifact;
@@ -176,9 +177,11 @@ public class MinecraftDownloader {
         try {
             while (mDownloaderThreadException.get() == null &&
                     !downloaderPool.awaitTermination(33, TimeUnit.MILLISECONDS)) {
-                double speed = speedCalculator.feed(mInternetUsageCounter.get()) / ONE_MEGABYTE;
-                if(mUseFileCounter) reportProgressFileCounter(speed);
-                else reportProgressSizeCounter(speed);
+                // Em bytes por segundo: a conversao para MB/s acontece na hora de
+                // exibir, e a estimativa de tempo restante precisa da unidade crua.
+                double speed = speedCalculator.feed(mInternetUsageCounter.get());
+                if(mUseFileCounter) reportProgressFileCounter(activity, speed);
+                else reportProgressSizeCounter(activity, speed);
             }
             Exception thrownException = mDownloaderThreadException.get();
             if(thrownException != null) {
@@ -194,21 +197,44 @@ public class MinecraftDownloader {
         }
     }
 
-    private void reportProgressFileCounter(double speed) {
+    /**
+     * Progresso quando nao sabemos o tamanho total (alguns servidores nao
+     * informam Content-Length): contamos arquivos. Sem total em bytes nao da
+     * para estimar tempo de forma honesta, entao nem tentamos.
+     */
+    private void reportProgressFileCounter(Context context, double speed) {
         long dlFileCounter = mProcessedFileCounter.get();
         int progress = (int)((dlFileCounter * 100L) / mTotalFileCount);
         ProgressLayout.setProgress(ProgressLayout.DOWNLOAD_MINECRAFT, progress,
                 R.string.newdl_downloading_game_files, dlFileCounter,
-                mTotalFileCount, speed);
+                mTotalFileCount, speed / ONE_MEGABYTE);
     }
 
-    private void reportProgressSizeCounter(double speed) {
+    /**
+     * Progresso quando conhecemos o tamanho total. Aqui vale a pena estimar o
+     * tempo restante: numa primeira instalacao sao centenas de MB, e so a
+     * porcentagem nao diz ao usuario se da para esperar ou se e melhor voltar
+     * depois.
+     */
+    private void reportProgressSizeCounter(Context context, double speed) {
         long dlFileSize = mProcessedSizeCounter.get();
         double dlSizeMegabytes = (double) dlFileSize / ONE_MEGABYTE;
         double dlTotalMegabytes = (double) mTotalSize / ONE_MEGABYTE;
         int progress = (int)((dlFileSize * 100L) / mTotalSize);
-        ProgressLayout.setProgress(ProgressLayout.DOWNLOAD_MINECRAFT, progress,
-                R.string.newdl_downloading_game_files_size, dlSizeMegabytes, dlTotalMegabytes, speed);
+        double speedMegabytes = speed / ONE_MEGABYTE;
+
+        String eta = TimeRemaining.format(context, mTotalSize - dlFileSize, speed);
+        if (eta == null) {
+            // Conexao instavel ou download quase terminando: melhor omitir a
+            // estimativa do que mostrar um numero que muda a cada segundo.
+            ProgressLayout.setProgress(ProgressLayout.DOWNLOAD_MINECRAFT, progress,
+                    R.string.newdl_downloading_game_files_size,
+                    dlSizeMegabytes, dlTotalMegabytes, speedMegabytes);
+        } else {
+            ProgressLayout.setProgress(ProgressLayout.DOWNLOAD_MINECRAFT, progress,
+                    R.string.newdl_downloading_game_files_size_eta,
+                    dlSizeMegabytes, dlTotalMegabytes, speedMegabytes, eta);
+        }
     }
 
     private File createGameJsonPath(String versionId) {

@@ -535,4 +535,9 @@
     <string name="launcher_status_ram_auto">%1$d MB (auto)</string>
     <string name="launcher_status_ram_manual">%1$d MB</string>
     <string name="mcl_memory_automatic_active">Currently allocating %1$d MB. Recalculated on every launch from free RAM and installed mods.</string>
+    <!-- Estimativa de tempo restante no download -->
+    <string name="eta_seconds">%1$d s left</string>
+    <string name="eta_minutes">%1$d min left</string>
+    <string name="eta_hours">%1$dh %2$dmin left</string>
+    <string name="newdl_downloading_game_files_size_eta">Downloading game\u2026 (%1$.2f/%2$.2f MB, %3$.2f MB/s \u2014 %4$s)</string>
 </resources>

@@ -363,4 +363,9 @@
     <!-- Resumo de configuracao na tela inicial -->
     <string name="launcher_status_ram_auto">%1$d MB (auto)</string>
     <string name="launcher_status_ram_manual">%1$d MB</string>
+    <!-- Estimativa de tempo restante no download -->
+    <string name="eta_seconds">faltam %1$d s</string>
+    <string name="eta_minutes">faltam %1$d min</string>
+    <string name="eta_hours">faltam %1$dh %2$dmin</string>
+    <string name="newdl_downloading_game_files_size_eta">Baixando o jogo\u2026 (%1$.2f/%2$.2f MB, %3$.2f MB/s \u2014 %4$s)</string>
 </resources>
