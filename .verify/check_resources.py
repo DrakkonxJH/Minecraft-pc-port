@@ -35,6 +35,35 @@ for _root, _dirs, _files in os.walk(RES):
             print(f"XML malformado: {_path}: {_e}")
             sys.exit(1)
 
+# 0b) Recursos duplicados na mesma pasta.
+# No Android o nome do recurso e o nome do arquivo SEM extensao, entao
+# "notif_icon.png" e "notif_icon.xml" na mesma pasta sao o MESMO recurso e o
+# merge falha com "Duplicate resources". E facil criar essa colisao sem
+# perceber ao adicionar um vetor para um icone que ja existia como bitmap --
+# aconteceu duas vezes neste projeto.
+_dup_problems = []
+for _entry in sorted(os.listdir(RES)):
+    _dir = os.path.join(RES, _entry)
+    if not os.path.isdir(_dir):
+        continue
+    _seen = {}
+    for _f in sorted(os.listdir(_dir)):
+        if not os.path.isfile(os.path.join(_dir, _f)):
+            continue
+        _base = _f.split('.')[0]  # cobre tambem os nine-patch (.9.png)
+        _seen.setdefault(_base, []).append(_f)
+    for _base, _files in _seen.items():
+        if len(_files) > 1:
+            _dup_problems.append(f"{_entry}/{_base}: {_files}")
+
+if _dup_problems:
+    print("Recursos duplicados (o merge do Android vai falhar):")
+    for _p in _dup_problems:
+        print("  -", _p)
+    print("\nDois arquivos com o mesmo nome-base na mesma pasta sao o mesmo "
+          "recurso.\nRenomeie um deles ou remova o que nao for usado.")
+    sys.exit(1)
+
 # 1) Recursos definidos por valor (<string name=...>, <color name=...>, ...)
 for root, _, files in os.walk(RES):
     base = os.path.basename(root)
