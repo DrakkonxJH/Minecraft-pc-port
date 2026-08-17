@@ -531,4 +531,8 @@
     <string name="mcl_memory_automatic_subtitle">Adjusts the memory on every launch based on free RAM and how many mods are installed. Turn off to set it manually.</string>
     <!-- Aviso de runtime Java experimental para a versao do jogo -->
     <string name="experimental_runtime_warning">Java %1$d is experimental and may fail to launch. This version needs Java %2$d \u2014 switch the runtime in the profile if the game crashes.</string>
+    <!-- Resumo de configuracao na tela inicial -->
+    <string name="launcher_status_ram_auto">%1$d MB (auto)</string>
+    <string name="launcher_status_ram_manual">%1$d MB</string>
+    <string name="mcl_memory_automatic_active">Currently allocating %1$d MB. Recalculated on every launch from free RAM and installed mods.</string>
 </resources>

@@ -44,13 +44,31 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
+            <TextView
+                android:id="@+id/launcher_status_chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_2sdp"
+                android:layout_marginBottom="@dimen/_6sdp"
+                android:background="@drawable/background_status_chip"
+                android:paddingHorizontal="@dimen/_10sdp"
+                android:paddingVertical="@dimen/_4sdp"
+                android:textColor="@color/brand_primary_light"
+                android:textSize="@dimen/_8ssp"
+                android:gravity="center"
+                android:maxLines="1"
+                tools:text="3072 MB - Java 21 - MobileGlues"
+                app:layout_constraintTop_toBottomOf="@id/brand_wordmark"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
             <com.kdt.mcgui.LauncherMenuButton
                 android:id="@+id/news_button"
                 style="@style/LauncherMenuButton.Universal"
                 android:layout_width="0dp"
                 android:drawableStart="@drawable/ic_menu_news"
                 android:text="@string/mcl_tab_wiki"
-                app:layout_constraintTop_toBottomOf="@id/brand_wordmark"
+                app:layout_constraintTop_toBottomOf="@id/launcher_status_chip"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/social_divider"/>
             <View
@@ -65,9 +83,9 @@
                 android:id="@+id/discord_button"
                 style="@style/LauncherMenuButton.Universal"
                 android:layout_width="0dp"
-                android:drawableStart="@drawable/ic_discord"
+                android:drawableStart="@drawable/ic_github"
                 android:text="@string/mcl_button_discord"
-                app:layout_constraintTop_toBottomOf="@id/brand_wordmark"
+                app:layout_constraintTop_toBottomOf="@id/launcher_status_chip"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/social_divider"/>
 

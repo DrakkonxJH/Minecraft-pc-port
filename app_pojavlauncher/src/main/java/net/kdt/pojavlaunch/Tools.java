@@ -440,10 +440,14 @@ public final class Tools {
             localeString = R.string.memory_warning_msg;
         }
 
-        if(LauncherPreferences.PREF_RAM_ALLOCATION > freeDeviceMemory) {
+        // Compara com o heap que sera realmente usado: no modo automatico a
+        // alocacao ja respeita a memoria livre, entao o aviso so aparece quando
+        // faz sentido em vez de assustar o usuario a cada lancamento.
+        int effectiveAllocation = LauncherPreferences.getEffectiveRAMAllocation(activity);
+        if(effectiveAllocation > freeDeviceMemory) {
             int finalDeviceMemory = freeDeviceMemory;
             LifecycleAwareAlertDialog.DialogCreator dialogCreator = (dialog, builder) ->
-                builder.setMessage(activity.getString(localeString, finalDeviceMemory, LauncherPreferences.PREF_RAM_ALLOCATION))
+                builder.setMessage(activity.getString(localeString, finalDeviceMemory, effectiveAllocation))
                         .setPositiveButton(android.R.string.ok, (d, w)->{});
 
             if(LifecycleAwareAlertDialog.haltOnDialog(activity.getLifecycle(), activity, dialogCreator)) {
@@ -1583,7 +1587,12 @@ public final class Tools {
         Logger.appendToLog("Info: Architecture: " + Architecture.archAsString(DEVICE_ARCHITECTURE));
         Logger.appendToLog("Info: Device model: " + Build.MANUFACTURER + " " +Build.MODEL);
         Logger.appendToLog(String.format("Info: Total RAM: %s MB", deviceRam != 0 ? deviceRam : "unavailable"));
-        Logger.appendToLog("Info: Allocated RAM: " + LauncherPreferences.PREF_RAM_ALLOCATION + "MB");
+        // No modo automatico o numero definitivo so e conhecido em JREUtils (depende
+        // da memoria livre no instante do lancamento), entao aqui apenas sinalizamos
+        // o modo para que a linha nao contradiga o log seguinte.
+        Logger.appendToLog(LauncherPreferences.PREF_RAM_AUTOMATIC
+                ? "Info: Allocated RAM: automatic"
+                : "Info: Allocated RAM: " + LauncherPreferences.PREF_RAM_ALLOCATION + "MB");
         Logger.appendToLog("Info: API version: " + SDK_INT);
         Logger.appendToLog("Info: Selected Minecraft version: " + gameVersion);
         Logger.appendToLog("Info: Custom Java arguments: \"" + javaArguments + "\"");

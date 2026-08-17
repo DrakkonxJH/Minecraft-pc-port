@@ -342,10 +342,12 @@ public class JREUtils {
         // MODO AUTOMATICO: recalcula a alocacao a cada lancamento, considerando a
         // memoria livre no momento e a quantidade de mods. Assim o jogo acompanha o
         // estado real do aparelho em vez de usar um numero escolhido uma unica vez.
-        int ramAllocation = LauncherPreferences.PREF_RAM_ALLOCATION;
+        int ramAllocation = LauncherPreferences.getEffectiveRAMAllocation(activity);
         if (LauncherPreferences.PREF_RAM_AUTOMATIC) {
-            ramAllocation = LauncherPreferences.computeAutomaticRAM(activity, Tools.countInstalledMods());
-            Logger.appendToLog("Info: Automatic RAM allocation: " + ramAllocation + " MB");
+            Logger.appendToLog("Info: Automatic RAM allocation: " + ramAllocation + " MB"
+                    + " (device: " + Tools.getTotalDeviceMemory(activity) + " MB, free: "
+                    + Tools.getFreeDeviceMemory(activity) + " MB, mods: "
+                    + Tools.countInstalledMods() + ")");
         }
         // -Xms menor que -Xmx deixa a JVM crescer o heap sob demanda: o jogo comeca
         // leve e so consome o maximo se realmente precisar.
@@ -370,7 +372,7 @@ public class JREUtils {
         userArgs.add("-Dmiolibpatcher.alc10=true");
 
         userArgs.addAll(JVMArgs);
-        activity.runOnUiThread(() -> Toast.makeText(activity, activity.getString(R.string.autoram_info_msg,LauncherPreferences.PREF_RAM_ALLOCATION), Toast.LENGTH_SHORT).show());
+        activity.runOnUiThread(() -> Toast.makeText(activity, activity.getString(R.string.autoram_info_msg, ramAllocation), Toast.LENGTH_SHORT).show());
         System.out.println(JVMArgs);
 
         initJavaRuntime(runtimeHome);

@@ -59,16 +59,10 @@ public class LauncherPreferenceJavaFragment extends LauncherPreferenceFragment {
         // fica desabilitado para deixar claro que o valor nao sera usado.
         SwitchPreference automaticMemory = findPreference("allocationAutomatic");
         if (automaticMemory != null) {
-            memorySeekbar.setEnabled(!automaticMemory.isChecked());
+            applyAutomaticMemoryState(automaticMemory, memorySeekbar, automaticMemory.isChecked());
             automaticMemory.setOnPreferenceChangeListener((preference, newValue) -> {
-                boolean automatic = Boolean.TRUE.equals(newValue);
-                memorySeekbar.setEnabled(!automatic);
-                if (automatic) {
-                    // Mostra de imediato quanto o modo automatico reservaria agora.
-                    int suggestion = LauncherPreferences.computeAutomaticRAM(
-                            preference.getContext(), Tools.countInstalledMods());
-                    memorySeekbar.setValue(suggestion);
-                }
+                applyAutomaticMemoryState(automaticMemory, memorySeekbar,
+                        Boolean.TRUE.equals(newValue));
                 return true;
             });
         }
@@ -82,6 +76,27 @@ public class LauncherPreferenceJavaFragment extends LauncherPreferenceFragment {
             openMultiRTDialog();
             return true;
         });
+    }
+
+    /**
+     * Sincroniza a interface com o estado do modo automatico de RAM.
+     * <p>
+     * Quando ligado, o slider fica desabilitado (o valor dele nao seria usado) e
+     * o resumo do switch passa a mostrar quanto seria reservado agora, para que o
+     * usuario nao precise abrir o jogo so para descobrir esse numero.
+     */
+    private void applyAutomaticMemoryState(SwitchPreference automaticMemory,
+                                           CustomSeekBarPreference memorySeekbar,
+                                           boolean automatic) {
+        memorySeekbar.setEnabled(!automatic);
+        if (!automatic) {
+            automaticMemory.setSummary(R.string.mcl_memory_automatic_subtitle);
+            return;
+        }
+        int suggestion = LauncherPreferences.computeAutomaticRAM(
+                automaticMemory.getContext(), Tools.countInstalledMods());
+        memorySeekbar.setValue(suggestion);
+        automaticMemory.setSummary(getString(R.string.mcl_memory_automatic_active, suggestion));
     }
 
     private void openMultiRTDialog() {

@@ -1,113 +1,108 @@
-"""Valida o modo automatico de alocacao de RAM.
-
-Problema observado: um Xiaomi com 11.323 MB recebeu 10.296 MB (91% da RAM
-total), sobrando ~1 GB para o Android inteiro. Nessa faixa o sistema mata o
-processo do jogo quando outro app pede memoria, e as pausas de GC crescem
-porque o heap fica muito maior que o working set real do Minecraft.
-
-Regras implementadas em LauncherPreferences:
-  * baseline por hardware (findBestRAMAllocation)
-  * bonus por quantidade de mods
-  * teto rigido de 55% da RAM total
-  * respeito a memoria livre no momento, reservando 1,5 GB ao sistema
-  * piso de 512 MB
+#!/usr/bin/env python3
 """
+Reimplementa a logica de RAM automatica de LauncherPreferences em Python e
+verifica que ela se comporta bem em toda a faixa de aparelhos -- de 1 GB ate
+24 GB -- e nao so no aparelho do desenvolvedor.
+
+Nao substitui uma compilacao: apenas garante que as regras nao produzam
+valores absurdos (heap maior que a memoria livre, piso negativo, aparelho de
+16 GB recebendo menos que um de 12 GB, etc).
+"""
+import sys
+
+FAILURES = []
 
 
-def find_best_ram(device_ram, is_32bit=False):
-    """Espelha LauncherPreferences.findBestRAMAllocation()."""
+def check(condition, message):
+    if not condition:
+        FAILURES.append(message)
+
+
+def find_best(device_ram, is32=False):
+    """Espelha findBestRAMAllocation()."""
     if device_ram < 1024: return 296
     if device_ram < 1536: return 448
     if device_ram < 2048: return 656
-    if is_32bit: return 696
+    if is32: return 696
     if device_ram < 3064: return 936
     if device_ram < 4096: return 1144
-    if device_ram < 6144: return 1536
-    if device_ram < 8192: return 2048
-    if device_ram < 12288: return 3072
-    return 4096
+    scaled = round(device_ram * 0.30 / 256) * 256
+    return max(1280, min(scaled, 6144))
 
 
-def compute_automatic_ram(device_ram, mod_count=0, available=0, is_32bit=False):
-    """Espelha LauncherPreferences.computeAutomaticRAM()."""
-    baseline = find_best_ram(device_ram, is_32bit)
-
-    if mod_count >= 150:  bonus = 2048
-    elif mod_count >= 75: bonus = 1536
-    elif mod_count >= 30: bonus = 1024
-    elif mod_count >= 10: bonus = 512
-    else:                 bonus = 0
-
+def compute_automatic(device_ram, free_ram, mods, is32=False):
+    """Espelha computeAutomaticRAM()."""
+    baseline = find_best(device_ram, is32)
+    if mods >= 150:  bonus = 2048
+    elif mods >= 75: bonus = 1536
+    elif mods >= 30: bonus = 1024
+    elif mods >= 10: bonus = 512
+    else:            bonus = 0
     target = baseline + bonus
     target = min(target, int(device_ram * 0.55))
-
-    if available > 0:
-        target = min(target, available - 1536)
-
+    if is32:
+        target = min(target, 1024)
+    if free_ram > 0:
+        target = min(target, free_ram - 1536)
     return max(target, 512)
 
 
-def main():
-    print("=== Aparelhos comuns, vanilla ===")
-    print(f"{'RAM TOTAL':<12} | {'ALOCADO':<9} | {'% DA RAM':<9} | SOBRA P/ SISTEMA")
-    print("-" * 62)
-    failures = 0
-    for ram in (2048, 4096, 6144, 8192, 11323, 16384):
-        alloc = compute_automatic_ram(ram)
-        pct = alloc / ram * 100
-        left = ram - alloc
-        # Invariantes: nunca passar de 55%, sempre deixar >= 2 GB livres em
-        # aparelhos de 6 GB ou mais.
-        ok = pct <= 55.1 and (ram < 6144 or left >= 2048)
-        failures += 0 if ok else 1
-        mark = "" if ok else "   <-- FALHOU"
-        print(f"{ram:>6} MB    | {alloc:>5} MB  | {pct:>6.1f}%   | {left:>6} MB{mark}")
+# --- Propriedades gerais, em toda a faixa de aparelhos -----------------------
+for ram in range(512, 24577, 128):
+    free = int(ram * 0.85)  # aparelho recem-ligado
+    value = compute_automatic(ram, free, 0)
+    check(value >= 512, f"{ram} MB: alocacao {value} abaixo do piso")
+    check(value <= max(512, int(ram * 0.55)),
+          f"{ram} MB: alocacao {value} passou de 55% da RAM total")
+    check(value <= 6144 or ram < 0, f"{ram} MB: alocacao {value} passou do teto absoluto")
 
-    print("\n=== Seu aparelho (11.323 MB) por quantidade de mods ===")
-    print(f"{'MODS':<8} | {'ALOCADO':<9} | {'% DA RAM':<9} | OBSERVACAO")
-    print("-" * 62)
-    for mods, desc in ((0, "vanilla"), (15, "poucos mods"), (45, "modpack medio"),
-                       (90, "modpack grande"), (200, "modpack pesado")):
-        alloc = compute_automatic_ram(11323, mods)
-        pct = alloc / 11323 * 100
-        ok = pct <= 55.1
-        failures += 0 if ok else 1
-        print(f"{mods:>4}     | {alloc:>5} MB  | {pct:>6.1f}%   | {desc}")
+# --- Monotonicidade: mais RAM nunca deve dar menos heap ----------------------
+prev = 0
+for ram in range(4096, 24577, 256):
+    value = compute_automatic(ram, int(ram * 0.85), 0)
+    check(value >= prev,
+          f"nao monotonico: {ram} MB deu {value}, menor que o aparelho anterior ({prev})")
+    prev = value
 
-    print("\n=== Memoria livre limita a alocacao ===")
-    print(f"{'LIVRE':<10} | {'ALOCADO':<9} | RESERVA P/ SISTEMA")
-    print("-" * 50)
-    for avail in (8000, 4000, 2500, 1800):
-        alloc = compute_automatic_ram(11323, 0, available=avail)
-        reserve = avail - alloc
-        ok = reserve >= 1536 or alloc == 512
-        failures += 0 if ok else 1
-        mark = "" if ok else "   <-- FALHOU"
-        print(f"{avail:>5} MB   | {alloc:>5} MB  | {reserve:>6} MB{mark}")
+# --- Mais mods nunca deve dar menos heap -------------------------------------
+for ram in (4096, 8192, 12288, 16384, 24576):
+    prev = 0
+    for mods in (0, 10, 30, 75, 150, 400):
+        value = compute_automatic(ram, int(ram * 0.85), mods)
+        check(value >= prev, f"{ram} MB com {mods} mods deu {value} < {prev}")
+        prev = value
 
-    print("\n=== Comparacao com o comportamento anterior ===")
-    old = 10296   # valor observado no log do usuario
-    new = compute_automatic_ram(11323)
-    print(f"  antes: {old} MB ({old/11323*100:.0f}% da RAM) -> sobra {11323-old} MB")
-    print(f"  agora: {new} MB ({new/11323*100:.0f}% da RAM) -> sobra {11323-new} MB")
-    assert new < old, "a nova alocacao deveria ser menor"
-    assert 11323 - new >= 2048, "precisa sobrar pelo menos 2 GB para o sistema"
+# --- 32 bits nunca deve exceder o espaco enderecavel -------------------------
+for ram in (2048, 4096, 8192):
+    value = compute_automatic(ram, int(ram * 0.85), 200, is32=True)
+    check(value <= 1024, f"32 bits com {ram} MB pediu {value} MB de heap")
 
-    # Aparelho fraco continua funcional
-    assert compute_automatic_ram(1024) >= 512
-    assert compute_automatic_ram(512) == 512
-    print("\nAparelhos fracos mantem o piso de 512 MB: ok")
+# --- Memoria livre e respeitada ----------------------------------------------
+check(compute_automatic(12288, 2000, 0) == 512,
+      "com apenas 2 GB livres o piso de 512 MB deveria prevalecer")
+check(compute_automatic(12288, 4096, 0) <= 4096 - 1536,
+      "com 4 GB livres o heap deveria deixar 1,5 GB para o sistema")
 
-    # -Xms deve ser metade do -Xmx, no minimo 512
-    for alloc in (512, 2048, 4096):
-        xms = max(512, alloc // 2)
-        assert xms <= alloc, "-Xms nao pode exceder -Xmx"
-    print("-Xms sempre menor ou igual a -Xmx: ok")
+# --- Casos concretos citados pelo usuario ------------------------------------
+CASES = [
+    # (nome, RAM total, RAM livre, mods, faixa esperada)
+    ("Xiaomi 2311DRK48G (12 GB)",       11323, 9000, 0,   (3000, 3600)),
+    ("Poco X6 Pro (12 GB reais)",       11500, 9000, 0,   (3000, 3600)),
+    ("Poco X6 Pro com modpack grande",  11500, 9000, 120, (4500, 5200)),
+    ("aparelho de 6 GB",                 5800, 4500, 0,   (1500, 2000)),
+    ("aparelho de 16 GB",               15500, 12000, 0,  (4400, 5000)),
+    ("aparelho de 24 GB",               23000, 18000, 0,  (6000, 6200)),
+    ("aparelho de 3 GB",                 2900, 2200, 0,   (512, 1000)),
+]
+for name, ram, free, mods, (lo, hi) in CASES:
+    value = compute_automatic(ram, free, mods)
+    check(lo <= value <= hi,
+          f"{name}: alocou {value} MB, esperado entre {lo} e {hi}")
+    print(f"  {name:34s} -> {value:5d} MB")
 
-    print(f"\nDivergencias: {failures}")
-    assert failures == 0
-    print("OK - todas as assercoes passaram")
-
-
-if __name__ == "__main__":
-    main()
+if FAILURES:
+    print("\nFALHAS:")
+    for f in FAILURES:
+        print("  -", f)
+    sys.exit(1)
+print("\nRAM automatica: todas as verificacoes passaram")

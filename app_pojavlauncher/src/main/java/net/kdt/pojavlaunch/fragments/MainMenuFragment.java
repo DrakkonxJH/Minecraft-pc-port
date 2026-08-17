@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -21,13 +22,17 @@ import androidx.fragment.app.Fragment;
 import com.kdt.mcgui.mcVersionSpinner;
 
 import net.kdt.pojavlaunch.CustomControlsActivity;
+import net.kdt.pojavlaunch.LauncherActivity;
+import net.kdt.pojavlaunch.PojavApplication;
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.extra.ExtraConstants;
 import net.kdt.pojavlaunch.extra.ExtraCore;
 import net.kdt.pojavlaunch.modloaders.LWJGL3ifyUtils;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+import net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceJavaFragment;
 import net.kdt.pojavlaunch.progresskeeper.ProgressKeeper;
+import net.kdt.pojavlaunch.utils.LauncherStatus;
 import net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles;
 import net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile;
 
@@ -38,6 +43,7 @@ public class MainMenuFragment extends Fragment {
     public static final String TAG = "MainMenuFragment";
 
     private mcVersionSpinner mVersionSpinner;
+    private TextView mStatusChip;
 
     public MainMenuFragment(){
         super(R.layout.fragment_launcher);
@@ -55,6 +61,15 @@ public class MainMenuFragment extends Fragment {
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
+        mStatusChip = view.findViewById(R.id.launcher_status_chip);
+
+        // Tocar no resumo leva direto as configuracoes de Java, que e onde se
+        // ajusta a RAM e o runtime -- os dois itens que ele mostra.
+        if (mStatusChip != null) {
+            mStatusChip.setOnClickListener(v -> Tools.swapFragment(requireActivity(),
+                    LauncherPreferenceJavaFragment.class,
+                    LauncherActivity.SETTING_FRAGMENT_TAG, null));
+        }
 
         mNewsButton.setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));
         mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.discord_invite)));
@@ -107,6 +122,29 @@ public class MainMenuFragment extends Fragment {
     public void onResume() {
         super.onResume();
         mVersionSpinner.reloadProfiles();
+        refreshStatusChip();
+    }
+
+    /**
+     * Atualiza o resumo de RAM, Java e renderizador. Roda em onResume porque o
+     * usuario pode ter acabado de trocar de perfil ou mexer nas configuracoes.
+     * O calculo toca o disco (le o "release" do runtime e conta os mods), entao
+     * acontece fora da thread principal.
+     */
+    private void refreshStatusChip() {
+        if (mStatusChip == null) return;
+        PojavApplication.sExecutorService.execute(() -> {
+            String summary = LauncherStatus.describeCurrentSetup(requireContext().getApplicationContext());
+            runOnUiThread(() -> {
+                if (mStatusChip == null) return;
+                if (summary == null) {
+                    mStatusChip.setVisibility(View.GONE);
+                } else {
+                    mStatusChip.setText(summary);
+                    mStatusChip.setVisibility(View.VISIBLE);
+                }
+            });
+        });
     }
 
     private void runInstallerWithConfirmation(boolean isCustomArgs) {

@@ -343,4 +343,24 @@
     <string name="local_login_bad_username_text">O nome de usuário deve ter entre 3 a 16 caracteres, deve conter somente letras latinas, número de 0 a 9 e sublinhados.</string>
     <string name="quick_setting_title">Configurações rápidas</string>
     <string name="preference_experimental_title">Opções experimentais</string>
+
+    <!-- ============ Strings proprias do MineDrakk ============ -->
+    <string name="mcl_button_discord">Comunidade</string>
+    <!-- Login Microsoft sem licenca do Java Edition: conta offline com nick proprio -->
+    <string name="microsoft_no_license_title">Escolha seu apelido</string>
+    <string name="microsoft_no_license_message">Esta conta Microsoft nao possui o Minecraft: Java Edition, entao sera criado um perfil offline.\n\nVoce pode jogar qualquer versao no modo um jogador, em LAN e em servidores no modo offline. Servidores online exigem uma conta licenciada.</string>
+    <string name="microsoft_no_license_found">Esta conta Microsoft nao possui o Minecraft: Java Edition.</string>
+    <string name="mcl_account_username">Apelido</string>
+    <!-- Entrar direto num servidor ao abrir o jogo (Minecraft 1.20+) -->
+    <string name="pvc_quick_play_server">Entrar em um servidor ao abrir (1.20+)</string>
+    <string name="pvc_quick_play_server_hint">exemplo.com:25565</string>
+    <!-- Modo automatico de alocacao de RAM -->
+    <string name="mcl_memory_automatic">Memoria automatica</string>
+    <string name="mcl_memory_automatic_subtitle">Ajusta a memoria a cada inicializacao com base na RAM livre e na quantidade de mods instalados. Desligue para definir manualmente.</string>
+    <string name="mcl_memory_automatic_active">Alocando %1$d MB agora. Recalculado a cada inicializacao pela RAM livre e pelos mods instalados.</string>
+    <!-- Aviso de runtime Java experimental para a versao do jogo -->
+    <string name="experimental_runtime_warning">O Java %1$d e experimental e pode falhar ao iniciar. Esta versao pede o Java %2$d \u2014 troque o runtime no perfil se o jogo travar.</string>
+    <!-- Resumo de configuracao na tela inicial -->
+    <string name="launcher_status_ram_auto">%1$d MB (auto)</string>
+    <string name="launcher_status_ram_manual">%1$d MB</string>
 </resources>

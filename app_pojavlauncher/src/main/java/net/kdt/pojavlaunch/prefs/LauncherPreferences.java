@@ -166,18 +166,22 @@ public class LauncherPreferences {
 
         if (deviceRam < 3064) return 936;
         if (deviceRam < 4096) return 1144;
-        if (deviceRam < 6144) return 1536;
 
-        // Aparelhos modernos (8 GB ou mais) aguentam bem mais que os 2048 MB
-        // historicos, mas dar RAM demais e contraproducente: o heap fica maior que
-        // o working set do jogo, as pausas de GC crescem e o Android passa a matar
-        // o processo por pressao de memoria.
+        // Aparelhos modernos aguentam bem mais que os 2048 MB historicos, mas dar
+        // RAM demais e contraproducente: o heap fica maior que o working set do
+        // jogo, as pausas de GC crescem e o Android passa a matar o processo por
+        // pressao de memoria.
         //
-        // A regra abaixo mira ~35% da RAM total, limitada a 4 GB. O Minecraft
-        // raramente se beneficia de mais que isso, mesmo com modpacks grandes.
-        if (deviceRam < 8192) return 2048;
-        if (deviceRam < 12288) return 3072;
-        return 4096;
+        // Em vez de uma tabela fixa com degraus (que dava 1536 MB para um aparelho
+        // de 6 GB e 3072 MB para um de 8 GB, um salto de 100% por 2 GB a mais),
+        // escalamos continuamente com ~30% da RAM total. Assim aparelhos de 16 GB
+        // ou 24 GB tambem se beneficiam sem precisar de um novo "if" a cada
+        // geracao de celular. O valor e arredondado para multiplos de 256 MB para
+        // ficar legivel no slider.
+        int scaled = Math.round(deviceRam * 0.30f / 256f) * 256;
+        // Teto de 6144 MB: acima disso o ganho e marginal ate em modpacks grandes,
+        // enquanto o custo de GC e de pressao de memoria cresce rapido.
+        return Math.max(1280, Math.min(scaled, 6144));
     }
 
     /**
@@ -215,6 +219,10 @@ public class LauncherPreferences {
         int hardCeiling = (int) (deviceRam * 0.55f);
         target = Math.min(target, hardCeiling);
 
+        // Aparelhos de 32 bits nao conseguem enderecar um heap grande, mesmo que a
+        // RAM fisica exista. Limitar aqui evita um "could not reserve heap" na JVM.
+        if (is32BitsDevice()) target = Math.min(target, 1024);
+
         // Respeitar o que esta livre agora, deixando 1,5 GB para o sistema.
         // O teto e aplicado SEMPRE que houver leitura valida de memoria livre; se o
         // resultado ficar abaixo do piso, o piso prevalece logo abaixo. Condicionar
@@ -229,6 +237,22 @@ public class LauncherPreferences {
         // estiver com pouquissima memoria livre, ainda tentamos iniciar com 512 MB
         // em vez de recusar o lancamento.
         return Math.max(target, 512);
+    }
+
+    /**
+     * RAM que sera realmente passada para a JVM neste lancamento.
+     * <p>
+     * Existe para que o Toast, o log de diagnostico e o aviso de memoria
+     * insuficiente mostrem todos o mesmo numero. Antes disso, cada um lia
+     * {@link #PREF_RAM_ALLOCATION} diretamente e, com o modo automatico ligado,
+     * exibiam um valor que nao correspondia ao heap de verdade.
+     *
+     * @param ctx contexto para consultar a memoria do dispositivo
+     * @return alocacao efetiva em MB
+     */
+    public static int getEffectiveRAMAllocation(Context ctx) {
+        if (!PREF_RAM_AUTOMATIC) return PREF_RAM_ALLOCATION;
+        return computeAutomaticRAM(ctx, Tools.countInstalledMods());
     }
 
     /// Find a correct resolution for the device
