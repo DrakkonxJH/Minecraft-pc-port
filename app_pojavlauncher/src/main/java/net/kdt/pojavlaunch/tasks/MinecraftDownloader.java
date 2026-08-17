@@ -180,7 +180,7 @@ public class MinecraftDownloader {
                 // Em bytes por segundo: a conversao para MB/s acontece na hora de
                 // exibir, e a estimativa de tempo restante precisa da unidade crua.
                 double speed = speedCalculator.feed(mInternetUsageCounter.get());
-                if(mUseFileCounter) reportProgressFileCounter(activity, speed);
+                if(mUseFileCounter) reportProgressFileCounter(speed);
                 else reportProgressSizeCounter(activity, speed);
             }
             Exception thrownException = mDownloaderThreadException.get();
@@ -202,7 +202,7 @@ public class MinecraftDownloader {
      * informam Content-Length): contamos arquivos. Sem total em bytes nao da
      * para estimar tempo de forma honesta, entao nem tentamos.
      */
-    private void reportProgressFileCounter(Context context, double speed) {
+    private void reportProgressFileCounter(double speed) {
         long dlFileCounter = mProcessedFileCounter.get();
         int progress = (int)((dlFileCounter * 100L) / mTotalFileCount);
         ProgressLayout.setProgress(ProgressLayout.DOWNLOAD_MINECRAFT, progress,

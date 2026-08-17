@@ -71,15 +71,53 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
             Toast.makeText(requireContext(),
                     getString(R.string.graphics_mode_applied, getString(mode.getTitleRes())),
                     Toast.LENGTH_SHORT).show();
-            reloadScreen();
+            refreshVideoControls();
             return true;
         });
     }
 
-    /** Recria a tela de preferencias para refletir valores alterados em lote. */
-    private void reloadScreen() {
-        setPreferenceScreen(null);
-        onCreatePreferences(null, null);
+    /**
+     * Atualiza os controles da tela apos uma alteracao em lote das preferencias.
+     * <p>
+     * A primeira versao disto recriava a tela inteira
+     * ({@code setPreferenceScreen(null)} seguido de {@code onCreatePreferences}).
+     * Isso era perigoso: gravar as preferencias dispara
+     * {@link #onSharedPreferenceChanged}, que chama {@code computeVisibility()}
+     * e portanto {@code requirePreference()} -- e esse metodo <b>lanca
+     * IllegalStateException</b> quando a tela esta nula. Ou seja, trocar o modo
+     * grafico podia derrubar o app numa condicao de corrida.
+     * <p>
+     * Atualizar cada controle no lugar e mais simples e nao tem esse risco.
+     */
+    private void refreshVideoControls() {
+        CustomSeekBarPreference resolutionSeekbar = findPreference("resolutionRatio");
+        if (resolutionSeekbar != null) {
+            resolutionSeekbar.setValue((int) (LauncherPreferences.PREF_SCALE_FACTOR * 100));
+        }
+        SwitchPreference sustained = findPreference("sustainedPerformance");
+        if (sustained != null) {
+            sustained.setChecked(LauncherPreferences.PREF_SUSTAINED_PERFORMANCE);
+        }
+        SwitchPreferenceCompat alternateSurface = findPreference("alternate_surface");
+        if (alternateSurface != null) {
+            alternateSurface.setChecked(LauncherPreferences.PREF_USE_ALTERNATE_SURFACE);
+        }
+        SwitchPreferenceCompat forceVsync = findPreference("force_vsync");
+        if (forceVsync != null) {
+            forceVsync.setChecked(LauncherPreferences.PREF_FORCE_VSYNC);
+        }
+        SwitchPreferenceCompat vsyncInZink = findPreference("vsync_in_zink");
+        if (vsyncInZink != null) {
+            vsyncInZink.setChecked(LauncherPreferences.PREF_VSYNC_IN_ZINK);
+        }
+        // O botao "Otimizar para este aparelho" reescreve as mesmas chaves do
+        // modo grafico e volta a selecao para "automatico"; o seletor precisa
+        // acompanhar, senao exibiria um modo que nao corresponde aos valores.
+        ListPreference graphicsMode = findPreference(GraphicsMode.PREF_KEY);
+        if (graphicsMode != null) {
+            graphicsMode.setValue(GraphicsMode.current().key);
+        }
+        computeVisibility();
     }
 
     /**
@@ -110,7 +148,7 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
                                 getString(R.string.preference_optimize_device_done,
                                         describeTier(applied)),
                                 Toast.LENGTH_LONG).show();
-                        reloadScreen();
+                        refreshVideoControls();
                     })
                     .show();
             return true;
@@ -132,7 +170,11 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
     }
 
     private void computeVisibility(){
-        requirePreference("force_vsync", SwitchPreferenceCompat.class)
-                .setVisible(LauncherPreferences.PREF_USE_ALTERNATE_SURFACE);
+        // findPreference em vez de requirePreference: este metodo e chamado pelo
+        // listener de SharedPreferences, que pode disparar quando a tela ainda
+        // nao foi montada (ou ja foi destruida). requirePreference lancaria.
+        SwitchPreferenceCompat forceVsync = findPreference("force_vsync");
+        if (forceVsync == null) return;
+        forceVsync.setVisible(LauncherPreferences.PREF_USE_ALTERNATE_SURFACE);
     }
 }

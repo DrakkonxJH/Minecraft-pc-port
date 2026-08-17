@@ -141,6 +141,14 @@ public final class DeviceProfile {
      */
     public static Tier applyRecommendedDefaults(Context context, boolean force) {
         SharedPreferences prefs = LauncherPreferences.DEFAULT_PREF;
+        // Normalmente DEFAULT_PREF ja foi inicializado por LocaleUtils.setLocale,
+        // chamado em attachBaseContext (que roda antes de onCreate). A guarda
+        // cobre pontos de entrada que nao passem por ali, como testes ou um
+        // Service iniciado isoladamente, onde o NPE seria dificil de rastrear.
+        if (prefs == null) {
+            Log.w(TAG, "SharedPreferences ainda nao inicializado; perfil nao aplicado");
+            return detectTier(context);
+        }
         Tier tier = detectTier(context);
 
         boolean alreadyApplied = prefs.getBoolean(PREF_KEY_PROFILE_APPLIED, false);
@@ -187,6 +195,16 @@ public final class DeviceProfile {
         // animacao de fundo do launcher reduz a pressao de memoria.
         if (lowRam) {
             setIfAbsent(prefs, editor, force, "disableGestures", false);
+        }
+
+        // O perfil grava as mesmas chaves que o modo grafico (resolucao, VSync,
+        // desempenho sustentado...). Quando ele sobrescreve tudo -- caso do botao
+        // "Otimizar para este aparelho" --, o modo selecionado deixa de
+        // corresponder ao que esta gravado. Voltar para "automatico" mantem a
+        // interface coerente com o estado real em vez de exibir "Qualidade"
+        // sobre valores que ja nao sao os de qualidade.
+        if (force) {
+            editor.putString(GraphicsMode.PREF_KEY, GraphicsMode.AUTOMATIC.key);
         }
 
         editor.putBoolean(PREF_KEY_PROFILE_APPLIED, true);

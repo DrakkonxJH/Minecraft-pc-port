@@ -208,8 +208,12 @@ public final class ControlPresets {
             style(data, COLOR_NEUTRAL, 35, 0.45f);
             // Reduz em 20% mantendo a proporcao, para nao quebrar as expressoes
             // dinamicas de posicao que dependem de ${width} e ${height}.
-            data.width *= 0.8f;
-            data.height *= 0.8f;
+            //
+            // Os campos width/height sao privados e guardados em dp; os
+            // acessores convertem para px nos dois sentidos, entao a conversao
+            // se cancela e a proporcao e aplicada corretamente.
+            data.setWidth(data.getWidth() * 0.8f);
+            data.setHeight(data.getHeight() * 0.8f);
         }
         return controls;
     }
