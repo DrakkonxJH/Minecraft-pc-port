@@ -8,7 +8,7 @@ static def getDate() { return new Date().format('yyyyMMdd') }
  * Versao semantica do MineDrakk. Unica fonte da verdade: mude aqui ao lancar.
  * O versionCode e derivado dela, entao nao ha dois numeros para manter em sincronia.
  */
-ext.minedrakkVersion = "0.1.5"
+ext.minedrakkVersion = "0.1.6"
 
 // Avaliado uma unica vez, no corpo do script (nao em metodo static: metodos
 // estaticos nao enxergam `gradle`, o que causava
@@ -223,6 +223,34 @@ android {
 
     ndkVersion = "27.3.13750724"
 
+    /*
+     * APKs separados por arquitetura.
+     *
+     * O grosso do tamanho do app sao bibliotecas nativas: cada renderizador,
+     * o LWJGL, o OpenAL e o spirv-cross vem compilados para quatro ABIs, e um
+     * APK unico carrega todas as quatro mesmo que o aparelho use apenas uma.
+     *
+     * Com o split, cada APK leva so a sua ABI. Um celular arm64 (praticamente
+     * todos desde 2017) deixa de baixar as versoes armeabi-v7a, x86 e x86_64,
+     * que nunca seriam usadas.
+     *
+     * universalApk continua ligado: gera tambem o APK com todas as ABIs, que e
+     * o que se distribui quando nao da para saber a arquitetura de antemao
+     * (instalacao manual, compartilhar o arquivo com um amigo). Quem quiser o
+     * menor APK usa o arm64-v8a; quem quiser o que funciona em tudo usa o
+     * universal.
+     *
+     * Ver scripts/get_apk.sh, que escolhe o APK certo automaticamente.
+     */
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'
+            universalApk true
+        }
+    }
+
     externalNativeBuild {
         ndkBuild {
             path file('src/main/jni/Android.mk')
@@ -265,6 +293,29 @@ android {
 
     lint {
         abortOnError false
+    }
+}
+
+/*
+ * versionCode distinto por ABI.
+ *
+ * Quando ha varios APKs da mesma versao, cada um precisa de um versionCode
+ * proprio -- a Play Store recusa o envio de dois APKs com o mesmo numero, e no
+ * aparelho a instalacao de um sobre o outro falha com conflito de versao.
+ *
+ * O deslocamento e somado ao versionCode base, mantendo a ordem: o universal
+ * fica com o numero base e as variantes especificas recebem um acrescimo
+ * pequeno, sem interferir no esquema MAJOR*1_000_000 + MINOR*10_000 + PATCH*100.
+ */
+def abiVersionOffsets = ['armeabi-v7a': 1, 'x86': 2, 'x86_64': 3, 'arm64-v8a': 4]
+
+android.applicationVariants.configureEach { variant ->
+    variant.outputs.each { output ->
+        def abi = output.getFilter(com.android.build.OutputFile.ABI)
+        if (abi != null) {
+            output.versionCodeOverride =
+                    (abiVersionOffsets.get(abi) ?: 0) + variant.versionCode
+        }
     }
 }
 

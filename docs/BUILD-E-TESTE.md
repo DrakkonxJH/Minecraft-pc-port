@@ -215,7 +215,29 @@ bash scripts/get_apk.sh
 ```
 
 O script procura todos os APKs do projeto, lista o que achou com tamanho e data,
-e copia o de debug para **`MineDrakk.apk`** na raiz do projeto.
+e copia o mais adequado para **`MineDrakk.apk`** na raiz do projeto.
+
+### Vários APKs? É o esperado
+
+O build gera **um APK por arquitetura**, mais um universal:
+
+| Arquivo | Tamanho aprox. | Quando usar |
+|---|---|---|
+| `...-arm64-v8a-debug.apk` | ~136 MB | Praticamente todo celular de 2017 em diante |
+| `...-armeabi-v7a-debug.apk` | ~120 MB | Aparelhos antigos de 32 bits |
+| `...-x86_64-debug.apk` | ~127 MB | Emuladores, Chromebooks |
+| `...-universal-debug.apk` | ~411 MB | Quando não se sabe a arquitetura de destino |
+
+O `get_apk.sh` escolhe sozinho: se houver um aparelho conectado por USB, usa a
+arquitetura dele; senão, prefere `arm64-v8a`. Para forçar:
+
+```bash
+bash scripts/get_apk.sh universal    # todas as arquiteturas
+bash scripts/get_apk.sh arm64-v8a    # uma específica
+```
+
+Compartilhando o APK com alguém cuja arquitetura você não conhece, mande o
+**universal**. Para uso próprio, o `arm64-v8a` é 3x menor.
 
 ### Se disser que não encontrou
 
