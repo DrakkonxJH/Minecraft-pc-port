@@ -582,4 +582,7 @@
     <string name="control_preset_applied">%1$s layout applied</string>
     <string name="control_preset_failed">Could not create the layout</string>
     <string name="control_sprint">Sprint</string>
+    <!-- Tela inicial reorganizada -->
+    <string name="launcher_selected_profile">Selected profile</string>
+    <string name="launcher_shortcuts">Shortcuts</string>
 </resources>

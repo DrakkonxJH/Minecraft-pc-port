@@ -21,6 +21,20 @@ TYPES = {'string', 'drawable', 'color', 'dimen', 'array', 'mipmap', 'integer'}
 
 defined = {t: set() for t in TYPES}
 
+# 0) Todo XML precisa ser bem formado. Um "--" dentro de comentario, por
+# exemplo, e proibido pela especificacao XML e derruba o aapt2 com uma
+# mensagem pouco obvia.
+for _root, _dirs, _files in os.walk(RES):
+    for _f in _files:
+        if not _f.endswith('.xml'):
+            continue
+        _path = os.path.join(_root, _f)
+        try:
+            ET.parse(_path)
+        except ET.ParseError as _e:
+            print(f"XML malformado: {_path}: {_e}")
+            sys.exit(1)
+
 # 1) Recursos definidos por valor (<string name=...>, <color name=...>, ...)
 for root, _, files in os.walk(RES):
     base = os.path.basename(root)

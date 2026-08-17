@@ -410,4 +410,7 @@
     <string name="control_preset_applied">Modelo %1$s aplicado</string>
     <string name="control_preset_failed">Nao foi possivel criar o modelo</string>
     <string name="control_sprint">Correr</string>
+    <!-- Tela inicial reorganizada -->
+    <string name="launcher_selected_profile">Perfil selecionado</string>
+    <string name="launcher_shortcuts">Atalhos</string>
 </resources>

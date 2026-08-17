@@ -27,6 +27,31 @@
         <item name="android:layout_height">@dimen/_66sdp</item>
     </style>
 
+    <!--
+        Bloco de atalho da tela inicial. Substitui o botao largo de altura fixa
+        do layout antigo: em grade de duas colunas cabe o dobro de acoes na
+        mesma altura, sobrando espaco para o cartao do perfil.
+    -->
+    <style name="LauncherShortcutTile" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">@dimen/_54sdp</item>
+        <item name="android:background">@drawable/background_shortcut_tile</item>
+        <item name="android:gravity">center_vertical|start</item>
+        <item name="android:paddingHorizontal">@dimen/_10sdp</item>
+        <item name="android:textSize">@dimen/_10ssp</item>
+        <item name="android:textColor">@color/primary_text</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:drawablePadding">@dimen/_8sdp</item>
+    </style>
+
+    <!-- Variante para links externos: mesmo formato, texto secundario. -->
+    <style name="LauncherShortcutTile.Link" parent="LauncherShortcutTile">
+        <item name="android:layout_height">@dimen/_46sdp</item>
+        <item name="android:textColor">@color/secondary_text</item>
+        <item name="android:textSize">@dimen/_9ssp</item>
+    </style>
+
     <style name="ThickDivider">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/_1sdp</item>
