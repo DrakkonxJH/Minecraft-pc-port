@@ -274,7 +274,7 @@
     <string name="preference_gyro_sample_rate_title">Gyroscope sampling rate</string>
     <string name="preference_gyro_sample_rate_description">If you have performance issues with gyroscope controls, increase this.</string>
     <string name="microsoft_login_retry_later">Too many requests, please try again later.</string>
-    <string name="storage_required">PojavLauncher requires external storage to be attached. Please reconnect it and restart the app.</string>
+    <string name="storage_required">MineDrakk requires external storage to be attached. Please reconnect it and restart the app.</string>
     <string name="mcl_setting_title_buttonallcaps">Only use capital letters in button labels</string>
     <string name="mcl_setting_subtitle_buttonallcaps">Disable this if you want to use lowercase letters in your controls.</string>
     <string name="create_profile">Create new profile</string>
@@ -341,7 +341,7 @@
     <string name="modpack_download_downloading_mods">Downloading mods (%.2f MB / %.2f MB)</string>
     <string name="modpack_download_downloading_mods_fc">Downloading mods (File %d out of %d)</string>
     <string name="modpack_download_applying_overrides">Applying overrides (%d/%d)</string>
-    <string name="modpack_install_notification_title">Pojav Modpack Installer</string>
+    <string name="modpack_install_notification_title">MineDrakk Modpack Installer</string>
     <string name="modpack_install_notification_success">Click here to finish modpack installation</string>
     <string name="modpack_install_notification_data_not_available">Failed to download mod loader information</string>
     <string name="modpack_install_modloader_download_failed">Failed to download the mod loader files</string>
@@ -373,7 +373,7 @@
     <string name="preference_category_miscellaneous">Miscellaneous settings</string>
     <string name="preference_category_video">Video settings</string>
     <string name="notification_permission_dialog_title">Permission request</string>
-    <string name="notification_permission_dialog_text">PojavLauncher requires a permission to post notifications to prevent game/modpack downloads from stopping when you leave the app. Without this permission, Android may shut down your downloads when you put PojavLauncher in background mode.</string>
+    <string name="notification_permission_dialog_text">MineDrakk requires a permission to post notifications to prevent game/modpack downloads from stopping when you leave the app. Without this permission, Android may shut down your downloads when you put MineDrakk in background mode.</string>
     <string name="notification_permission_toast">You can always change your mind later by going into Settings</string>
     <string name="preference_ask_for_notification_title">Allow notifications</string>
     <string name="preference_ask_for_notification_description">Click to re-request the notification permission, required for game/modpack background downloads to work properly.</string>
@@ -540,4 +540,15 @@
     <string name="eta_minutes">%1$d min left</string>
     <string name="eta_hours">%1$dh %2$dmin left</string>
     <string name="newdl_downloading_game_files_size_eta">Downloading game\u2026 (%1$.2f/%2$.2f MB, %3$.2f MB/s \u2014 %4$s)</string>
+    <!-- Textos que antes estavam fixos nos layouts e por isso nunca traduziam -->
+    <string name="mcl_account_microsoft">Microsoft account</string>
+    <string name="mcl_account_local">Offline account</string>
+    <string name="modpack_browse">Browse modpacks</string>
+    <string name="modpack_import_zip">Import .zip or .mrpack</string>
+    <string name="profile_custom_path">Custom path</string>
+    <string name="import_control_file_name">File name:</string>
+    <!-- Tela de escolha do tipo de conta -->
+    <string name="auth_select_title">How do you want to play?</string>
+    <string name="auth_select_microsoft_subtitle">Sign in with Microsoft. Required to join online servers and to use your own skin and cape.</string>
+    <string name="auth_select_local_subtitle">Pick a nickname and play right away. Works in singleplayer, on LAN and on offline-mode servers.</string>
 </resources>

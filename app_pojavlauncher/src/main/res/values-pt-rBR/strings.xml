@@ -368,4 +368,15 @@
     <string name="eta_minutes">faltam %1$d min</string>
     <string name="eta_hours">faltam %1$dh %2$dmin</string>
     <string name="newdl_downloading_game_files_size_eta">Baixando o jogo\u2026 (%1$.2f/%2$.2f MB, %3$.2f MB/s \u2014 %4$s)</string>
+    <!-- Textos que antes estavam fixos nos layouts e por isso nunca traduziam -->
+    <string name="mcl_account_microsoft">Conta Microsoft</string>
+    <string name="mcl_account_local">Conta offline</string>
+    <string name="modpack_browse">Procurar modpacks</string>
+    <string name="modpack_import_zip">Importar .zip ou .mrpack</string>
+    <string name="profile_custom_path">Caminho personalizado</string>
+    <string name="import_control_file_name">Nome do arquivo:</string>
+    <!-- Tela de escolha do tipo de conta -->
+    <string name="auth_select_title">Como voce quer jogar?</string>
+    <string name="auth_select_microsoft_subtitle">Entre com a Microsoft. Necessario para entrar em servidores online e usar sua skin e capa.</string>
+    <string name="auth_select_local_subtitle">Escolha um apelido e jogue na hora. Funciona no modo um jogador, em LAN e em servidores no modo offline.</string>
 </resources>
