@@ -263,7 +263,10 @@ public final class Tools {
     public static boolean shouldUseUBWC() {
         try {
             boolean isSamsung = Build.MANUFACTURER.equalsIgnoreCase("samsung");
-            boolean isOneUI = !systemPropertiesGet("ro.build.version.oneui").isBlank();
+            // String.isBlank() e API 30: em aparelhos mais antigos lancaria
+            // NoSuchMethodError bem no caminho de lancamento do jogo.
+            String oneUiVersion = systemPropertiesGet("ro.build.version.oneui");
+            boolean isOneUI = oneUiVersion != null && !oneUiVersion.trim().isEmpty();
             return isOneUI && isSamsung && isAdreno740();
         } catch (Exception e) {
             return false;
@@ -340,7 +343,10 @@ public final class Tools {
     public static void deleteSodiumMods() {
         File modsDir = new File(getGameDir(), "mods");
         File[] mods = modsDir.listFiles(file -> file.isFile() && file.getName().endsWith(".jar"));
-        if(mods == null) ;
+        // O ponto e virgula solto que existia aqui ("if(mods == null) ;") tornava
+        // a guarda inofensiva: com a pasta mods ausente ou ilegivel, listFiles()
+        // devolve null e o for logo abaixo estourava NullPointerException.
+        if(mods == null) return;
         for(File file : mods) {
             String name = file.getName().toLowerCase();
             if(name.contains("sodium") ||
@@ -1586,6 +1592,14 @@ public final class Tools {
         Logger.appendToLog("Info: Launcher version: " + BuildConfig.VERSION_NAME);
         Logger.appendToLog("Info: Architecture: " + Architecture.archAsString(DEVICE_ARCHITECTURE));
         Logger.appendToLog("Info: Device model: " + Build.MANUFACTURER + " " +Build.MODEL);
+        // SoC e ABIs ajudam a triagem de bugs em aparelhos que nao temos em maos:
+        // a maioria dos problemas de compatibilidade se agrupa por chipset.
+        if (SDK_INT >= Build.VERSION_CODES.S) {
+            Logger.appendToLog("Info: SoC: " + Build.SOC_MANUFACTURER + " " + Build.SOC_MODEL);
+        }
+        Logger.appendToLog("Info: Supported ABIs: " + String.valueOf(
+                android.text.TextUtils.join(", ", Build.SUPPORTED_ABIS)));
+        Logger.appendToLog("Info: Android " + Build.VERSION.RELEASE + " (API " + SDK_INT + ")");
         Logger.appendToLog(String.format("Info: Total RAM: %s MB", deviceRam != 0 ? deviceRam : "unavailable"));
         // No modo automatico o numero definitivo so e conhecido em JREUtils (depende
         // da memoria livre no instante do lancamento), entao aqui apenas sinalizamos
@@ -1598,6 +1612,13 @@ public final class Tools {
         Logger.appendToLog("Info: Custom Java arguments: \"" + javaArguments + "\"");
         GLInfoUtils.GLInfo info = GLInfoUtils.getGlInfo();
         Logger.appendToLog("Info: Graphics device: "+info.vendor+ " "+info.renderer+" (OpenGL ES "+info.glesMajorVersion+")");
+        Logger.appendToLog("Info: GPU family: " + info.getVendorFamily());
+        if (info.isUnknown()) {
+            // Vale destacar: com GPU nao identificada caimos nos caminhos mais
+            // conservadores e varias mitigacoes especificas nao sao aplicadas.
+            Logger.appendToLog("WARNING: Could not identify the graphics driver."
+                    + " Falling back to the most conservative settings.");
+        }
     }
 
     public interface DownloaderFeedback {
@@ -1938,13 +1959,60 @@ public final class Tools {
             if(rendererId.contains("vulkan") && !deviceHasVulkan) continue;
             if(rendererId.contains("vulkan_zink") && !deviceHasOSMesaZinkBinary) continue;
             if(rendererId.contains("ltw") && (!deviceHasOpenGLES3 || !appHasLtw)) continue;
+            // Renderizadores que precisam traduzir OpenGL desktop exigem GLES 3.
+            // Sem esta linha eles apareciam na lista de aparelhos com GLES 2 e
+            // resultavam em tela preta em vez de uma mensagem clara.
+            if(requiresOpenGLES3(rendererId) && !deviceHasOpenGLES3) continue;
+            // A biblioteca nativa pode simplesmente nao ter sido empacotada para
+            // esta arquitetura. Oferecer a opcao levaria a UnsatisfiedLinkError.
+            if(!rendererLibraryExists(rendererId)) continue;
             rendererIds.add(rendererId);
             rendererNames.add(defaultRendererNames[i]);
         }
+
+        // Nunca devolver lista vazia: quem chama faz rendererIds.get(0) direto e
+        // um IndexOutOfBoundsException aqui impediria o jogo de abrir sem dar
+        // nenhuma pista do motivo. O Krypton Wrapper (GLES 2) e o denominador
+        // comum e roda em qualquer aparelho que o app suporta.
+        if(rendererIds.isEmpty()) {
+            Log.w(APP_NAME, "No compatible renderer found, falling back to opengles2");
+            rendererIds.add("opengles2");
+            rendererNames.add(defaultRendererNames.length > 0
+                    ? defaultRendererNames[0] : "OpenGL ES 2");
+        }
+
         sCompatibleRenderers = new RenderersList(rendererIds,
                 rendererNames.toArray(new String[0]));
 
         return sCompatibleRenderers;
+    }
+
+    /** Renderizadores que traduzem OpenGL desktop e por isso exigem GLES 3+. */
+    private static boolean requiresOpenGLES3(String rendererId) {
+        return rendererId.contains("mobileglues")
+                || rendererId.contains("zink")
+                || rendererId.contains("ltw");
+    }
+
+    /**
+     * Confere se a biblioteca nativa do renderizador foi realmente empacotada.
+     * <p>
+     * Nem toda variante do APK traz todas as bibliotecas (algumas sao opcionais
+     * ou proprietarias). Listar um renderizador ausente levaria a
+     * UnsatisfiedLinkError so na hora de abrir o jogo.
+     */
+    private static boolean rendererLibraryExists(String rendererId) {
+        String libraryName;
+        switch (rendererId) {
+            case "opengles2":                        libraryName = "libng_gl4es.so"; break;
+            case "opengles3_desktopgl_zink_kopper":  libraryName = "libglxshim.so"; break;
+            case "opengles_mobileglues":             libraryName = "libmobileglues.so"; break;
+            case "vulkan_zink":                      libraryName = "libOSMesa.so"; break;
+            case "opengles3_ltw":                    libraryName = "libltw.so"; break;
+            // Renderizador desconhecido (adicionado depois): nao bloquear.
+            default: return true;
+        }
+        return new File(Tools.NATIVE_LIB_DIR, libraryName).exists();
     }
 
     /** Checks if the renderer Id is compatible with the current device */

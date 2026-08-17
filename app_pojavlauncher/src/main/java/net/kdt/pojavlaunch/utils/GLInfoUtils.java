@@ -11,20 +11,36 @@ import android.util.Log;
 
 public class GLInfoUtils {
     public static String GLES_VERSION_PREFIX = "OpenGL ES ";
+    /** Usado quando o driver nao informa vendor/renderer. */
+    public static final String UNKNOWN = "<Unknown>";
     private static GLInfo info;
 
     private static int getMajorGLVersion(String versionString) {
-        if(versionString.startsWith(GLES_VERSION_PREFIX)) {
+        // glGetString pode devolver null em drivers com problema, e nem toda
+        // implementacao segue o formato "OpenGL ES X.Y": ja foram vistos
+        // "OpenGL ES 3.2 v1.r32p1" e strings sem ponto nenhum. Sem estas
+        // guardas o launcher morria com NPE ou StringIndexOutOfBounds antes
+        // mesmo de mostrar a tela inicial.
+        if (versionString == null) {
+            throw new NumberFormatException("GL version string is null");
+        }
+        if (versionString.startsWith(GLES_VERSION_PREFIX)) {
             versionString = versionString.substring(GLES_VERSION_PREFIX.length());
         }
+        versionString = versionString.trim();
         int firstDot = versionString.indexOf('.');
-        String majorVersion = versionString.substring(0, firstDot).trim();
+        String majorVersion = firstDot < 0
+                ? versionString
+                : versionString.substring(0, firstDot).trim();
         return Integer.parseInt(majorVersion);
     }
 
     private static GLInfo queryInfo(int contextGLVersion) {
-        String vendor = GLES20.glGetString(GLES20.GL_VENDOR);
-        String renderer = GLES20.glGetString(GLES20.GL_RENDERER);
+        // Qualquer um destes pode vir null: normalizamos aqui para que o resto
+        // do launcher (que faz contains()/equals() nestes campos) nunca precise
+        // se preocupar com isso.
+        String vendor = nonNull(GLES20.glGetString(GLES20.GL_VENDOR));
+        String renderer = nonNull(GLES20.glGetString(GLES20.GL_RENDERER));
         String versionString = GLES20.glGetString(GLES30.GL_VERSION);
         int version = 2;
         try {
@@ -39,9 +55,13 @@ public class GLInfoUtils {
         return new GLInfo(vendor, renderer, version);
     }
 
+    private static String nonNull(String value) {
+        return value == null ? UNKNOWN : value;
+    }
+
     private static void initDummyInfo() {
         Log.e("GLInfoUtils", "An error happened during info query. Will use dummy info. This should be investigated.");
-        info = new GLInfo("<Unknown>", "<Unknown>", 2);
+        info = new GLInfo(UNKNOWN, UNKNOWN, 2);
     }
 
     private static EGLContext tryCreateContext(EGLDisplay eglDisplay, EGLConfig config, int majorVersion) {
@@ -157,11 +177,54 @@ public class GLInfoUtils {
         }
 
         /**
-         * Check if this GLInfo belongs to a Qualcomm Adreno graphics adapter
-         * @return
+         * Se o adaptador grafico e um Qualcomm Adreno.
+         * <p>
+         * A checagem antiga exigia {@code vendor.equals("Qualcomm")}, mas o
+         * valor real varia entre drivers e fabricantes: "Qualcomm Inc.",
+         * "Qualcomm Technologies, Inc." e ate strings com espacos extras
+         * aparecem em aparelhos reais. Isso fazia dispositivos Adreno legitimos
+         * serem tratados como GPU desconhecida, perdendo o carregamento do
+         * driver Turnip e as mitigacoes especificas de Adreno.
          */
         public boolean isAdreno() {
-            return renderer.contains("Adreno") && vendor.equals("Qualcomm");
+            return contains(renderer, "adreno") || contains(vendor, "qualcomm");
+        }
+
+        /** Se o adaptador e um ARM Mali (inclui a linha Immortalis). */
+        public boolean isMali() {
+            return contains(renderer, "mali") || contains(renderer, "immortalis")
+                    || contains(vendor, "arm");
+        }
+
+        /** Se o adaptador e um Imagination PowerVR. */
+        public boolean isPowerVR() {
+            return contains(renderer, "powervr") || contains(vendor, "imagination");
+        }
+
+        /** Se o adaptador e um Samsung Xclipse (arquitetura AMD RDNA). */
+        public boolean isXclipse() {
+            return contains(renderer, "xclipse");
+        }
+
+        /** Se nao foi possivel identificar o adaptador grafico. */
+        public boolean isUnknown() {
+            return UNKNOWN.equals(renderer) && UNKNOWN.equals(vendor);
+        }
+
+        /**
+         * Nome curto do fabricante da GPU, para log e para a tela inicial.
+         */
+        public String getVendorFamily() {
+            if (isAdreno()) return "Adreno";
+            if (isMali()) return "Mali";
+            if (isPowerVR()) return "PowerVR";
+            if (isXclipse()) return "Xclipse";
+            return UNKNOWN;
+        }
+
+        private static boolean contains(String haystack, String needleLowercase) {
+            return haystack != null
+                    && haystack.toLowerCase(java.util.Locale.ROOT).contains(needleLowercase);
         }
     }
 }

@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class TouchControllerUtils {
@@ -106,7 +107,13 @@ public class TouchControllerUtils {
             Log.w("TouchController", "Failed to set TouchController environment variable", e);
         }
         MessageTransport transport = UnixSocketTransportKt.UnixSocketTransport(socketName);
-        proxyClient = new LauncherProxyClient(transport, Set.of(PlatformCapability.TEXT_STATUS, PlatformCapability.KEYBOARD_SHOW));
+        // Set.of() so existe a partir da API 30; o minSdk do app e 21 e nao ha
+        // desugaring de biblioteca configurado, entao usar Set.of() lancaria
+        // NoSuchMethodError em qualquer aparelho anterior ao Android 11.
+        Set<PlatformCapability> capabilities = new HashSet<>();
+        capabilities.add(PlatformCapability.TEXT_STATUS);
+        capabilities.add(PlatformCapability.KEYBOARD_SHOW);
+        proxyClient = new LauncherProxyClient(transport, capabilities);
         proxyClient.run();
         touchControllerInputView.setClient(proxyClient);
         Vibrator vibrator = ContextCompat.getSystemService(context, Vibrator.class);

@@ -27,6 +27,15 @@ import java.util.zip.ZipFile;
 
 public class ModpackInstaller {
 
+    /**
+     * Equivalente a String.isBlank(), que so existe a partir da API 30.
+     * O minSdk do app e 21 e nao ha desugaring de biblioteca configurado.
+     */
+    private static boolean isBlankString(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+
     public static ModLoader installModpack(ModDetail modDetail, int selectedVersion, InstallFunction installFunction) throws IOException {
         String versionUrl = modDetail.versionUrls[selectedVersion];
         String versionHash = modDetail.versionHashes[selectedVersion];
@@ -122,7 +131,9 @@ public class ModpackInstaller {
             default:
                 throw new UnsupportedOperationException("Unknown API source: " + apiSource);
         }
-        if(modpackName.isBlank() || modpackVersion.isBlank() || modpackMcVersion.isBlank()) throw new IOException("Corrupt Modpack manifest file.");
+        // isBlank() e API 30; trim().isEmpty() tem o mesmo efeito e roda no minSdk 21.
+        if(isBlankString(modpackName) || isBlankString(modpackVersion)
+                || isBlankString(modpackMcVersion)) throw new IOException("Corrupt Modpack manifest file.");
 
         // Hash the ZIP File, can't use getSha1 cause progress bar
         MessageDigest algorithm = MessageDigest.getInstance("SHA-1");
@@ -147,7 +158,10 @@ public class ModpackInstaller {
             sb.append(String.format("%02x", b));
         }
         String hash = sb.toString();
-        String profileFolderName = String.join(" ", modpackName, modpackVersion, "for", modpackMcVersion, hash);
+        // String.join() e API 26. Como o nome vai virar um caminho de pasta e
+        // ja passa por um replaceAll logo abaixo, concatenar direto e equivalente.
+        String profileFolderName = modpackName + " " + modpackVersion + " for "
+                + modpackMcVersion + " " + hash;
         profileFolderName = profileFolderName.trim().replaceAll("[\\\\/:*?\"<>| \\t\\n]", "_");
 
         // Install the actual pack into custom_instances
@@ -158,7 +172,7 @@ public class ModpackInstaller {
         MinecraftProfile profile = MinecraftProfile.getDefaultProfile();
         profile.gameDir = "./custom_instances/" + profileFolderName;
         profile.name = modpackName;
-        if (!modpackMcVersion.isBlank()) profile.lastVersionId = modpackMcVersion;
+        if (!isBlankString(modpackMcVersion)) profile.lastVersionId = modpackMcVersion;
         if (modLoaderInfo != null && modLoaderInfo.getVersionId() != null)
             profile.lastVersionId = modLoaderInfo.getVersionId();
         LauncherProfiles.mainProfileJson.profiles.put(profileFolderName, profile);

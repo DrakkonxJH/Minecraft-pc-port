@@ -69,6 +69,7 @@ import net.kdt.pojavlaunch.lifecycle.ContextExecutor;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.prefs.QuickSettingSideDialog;
 import net.kdt.pojavlaunch.services.GameService;
+import net.kdt.pojavlaunch.utils.GLInfoUtils;
 import net.kdt.pojavlaunch.utils.JREUtils;
 import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.utils.TouchControllerInputView;
@@ -462,12 +463,26 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
             Tools.LOCAL_RENDERER = "opengles2";
             // MobileGlues becomes available post 1.17. It has superior compatibility with mods
             // while having fairly similar performance compared to GL4ES-based forks.
-            if(assetVersion.matches("\\d+") || // Should match all digits, which is the modern assetVersioning
-               "1.17".equals(assetVersion) ||
-               "1.18".equals(assetVersion) ||
-               "1.19".equals(assetVersion) ||
-                // Angelica gives us GL3.3core on 1.7.10, it's a unique case.
-                hasMods("angelica")) Tools.LOCAL_RENDERER = "opengles_mobileglues";
+            boolean modernVersion =
+                    assetVersion.matches("\\d+") || // Should match all digits, which is the modern assetVersioning
+                    "1.17".equals(assetVersion) ||
+                    "1.18".equals(assetVersion) ||
+                    "1.19".equals(assetVersion) ||
+                    // Angelica gives us GL3.3core on 1.7.10, it's a unique case.
+                    hasMods("angelica");
+
+            // O MobileGlues traduz chamadas de OpenGL desktop para GLES 3+. Num
+            // aparelho que so entrega GLES 2 o resultado e tela preta ou crash no
+            // primeiro frame -- e a versao do Minecraft nao diz nada sobre a GPU.
+            // Antes esta checagem nao existia: bastava a versao ser 1.17+ para o
+            // MobileGlues ser escolhido em qualquer hardware.
+            GLInfoUtils.GLInfo glInfo = GLInfoUtils.getGlInfo();
+            if (modernVersion && glInfo.glesMajorVersion >= 3) {
+                Tools.LOCAL_RENDERER = "opengles_mobileglues";
+            } else if (modernVersion) {
+                Logger.appendToLog("Info: MobileGlues skipped, device reports only OpenGL ES "
+                        + glInfo.glesMajorVersion + " (" + glInfo.getVendorFamily() + ")");
+            }
         }
         if(!Tools.checkRendererCompatible(this, Tools.LOCAL_RENDERER)) {
             Tools.RenderersList renderersList = Tools.getCompatibleRenderers(this);
